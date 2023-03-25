@@ -11,13 +11,11 @@ const (
 	SINGULAR InstructionFormat = iota
 	CMD_VAL
 	CMD_REG
-	CMD_ADP
 	CMD_REG_VAL
 	CMD_REG_REG
-	CMD_REG_DLY
-	CMD_DLY_REG
-	CMD_ADP_VAL
-	CMD_ADP_REG
+	CMD_REG_SPC
+	CMD_SPC_REG
+	CMD_SPC_VAL
 )
 
 type Instruction struct {
@@ -139,7 +137,7 @@ func (is *InstructionSet) parse(tokens []parse.Token) {
 					i += 9
 				} else if tokens[i+6].Type == parse.DELAY {
 					is.Instructions = append(is.Instructions, Instruction{
-						Format: CMD_REG_DLY,
+						Format: CMD_REG_SPC,
 						Tokens: tokens[i : i+7],
 					})
 					i += 6
@@ -152,19 +150,19 @@ func (is *InstructionSet) parse(tokens []parse.Token) {
 				}
 			case parse.ADP:
 				is.Instructions = append(is.Instructions, Instruction{
-					Format: CMD_ADP_VAL,
+					Format: CMD_SPC_VAL,
 					Tokens: tokens[i : i+4],
 				})
 				i += 3
 			case parse.DELAY:
 				is.Instructions = append(is.Instructions, Instruction{
-					Format: CMD_DLY_REG,
+					Format: CMD_SPC_REG,
 					Tokens: tokens[i : i+7],
 				})
 				i += 6
 			case parse.SND_DELAY:
 				is.Instructions = append(is.Instructions, Instruction{
-					Format: CMD_DLY_REG,
+					Format: CMD_SPC_REG,
 					Tokens: tokens[i : i+7],
 				})
 				i += 6
@@ -188,7 +186,7 @@ func (is *InstructionSet) parse(tokens []parse.Token) {
 				}
 			case parse.ADP:
 				is.Instructions = append(is.Instructions, Instruction{
-					Format: CMD_ADP_REG,
+					Format: CMD_SPC_REG,
 					Tokens: tokens[i : i+7],
 				})
 				i += 6

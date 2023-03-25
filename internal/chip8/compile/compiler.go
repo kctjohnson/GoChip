@@ -2,6 +2,7 @@ package compile
 
 import (
 	"chip8-emu/internal/chip8/parse"
+	"fmt"
 	"strconv"
 )
 
@@ -22,221 +23,121 @@ func (c Compiler) Compile() []byte {
 	for _, inst := range c.Instructions.Instructions {
 		switch inst.Tokens[0].Type {
 		case parse.CLS:
-			opcodes = append(opcodes, []byte{0x00, 0xE0}...)
+			bytes := ParseInstruction(0x00E0, inst)
+			opcodes = append(opcodes, bytes...)
 		case parse.SYSCALL:
-			callAddress := valueToInt(inst.Tokens[1])
-			op := 0x0000 | (0xFFF & callAddress)
-			first := byte(op >> 4)
-			second := byte(op & 0xFF)
-			opcodes = append(opcodes, []byte{first, second}...)
+			bytes := ParseInstruction(0x0000, inst)
+			opcodes = append(opcodes, bytes...)
 		case parse.CALL:
-			callAddress := valueToInt(inst.Tokens[1])
-			op := 0x2000 | (0xFFF & callAddress)
-			first := byte((op & 0xFF00) >> 8)
-			second := byte(op & 0xFF)
-			opcodes = append(opcodes, []byte{first, second}...)
+			bytes := ParseInstruction(0x2000, inst)
+			opcodes = append(opcodes, bytes...)
 		case parse.RET:
-			opcodes = append(opcodes, []byte{0x00, 0xEE}...)
+			bytes := ParseInstruction(0x00EE, inst)
+			opcodes = append(opcodes, bytes...)
 		case parse.JMP:
-			callAddress := valueToInt(inst.Tokens[1])
-			op := 0x1000 | (0xFFF & callAddress)
-			first := byte((op & 0xFF00) >> 8)
-			second := byte(op & 0xFF)
-			opcodes = append(opcodes, []byte{first, second}...)
+			bytes := ParseInstruction(0x1000, inst)
+			opcodes = append(opcodes, bytes...)
 		case parse.RJMP:
-			callAddress := valueToInt(inst.Tokens[1])
-			op := 0xB000 | (0xFFF & callAddress)
-			first := byte((op & 0xFF00) >> 8)
-			second := byte(op & 0xFF)
-			opcodes = append(opcodes, []byte{first, second}...)
+			bytes := ParseInstruction(0xB000, inst)
+			opcodes = append(opcodes, bytes...)
 		case parse.SEQ:
 			switch inst.Format {
 			case CMD_REG_VAL:
-				reg := valueToInt(inst.Tokens[3])
-				val := valueToInt(inst.Tokens[6])
-				op := 0x3000 | ((reg << 8) & 0x0F00) | (val & 0x00FF)
-				first := byte((op & 0xFF00) >> 8)
-				second := byte(op & 0xFF)
-				opcodes = append(opcodes, []byte{first, second}...)
+				bytes := ParseInstruction(0x3000, inst)
+				opcodes = append(opcodes, bytes...)
 			case CMD_REG_REG:
-				reg1 := valueToInt(inst.Tokens[3])
-				reg2 := valueToInt(inst.Tokens[8])
-				op := 0x5000 | ((reg1 << 8) & 0x0F00) | ((reg2 << 4) & 0x00F0)
-				first := byte((op & 0xFF00) >> 8)
-				second := byte(op & 0xFF)
-				opcodes = append(opcodes, []byte{first, second}...)
+				bytes := ParseInstruction(0x5000, inst)
+				opcodes = append(opcodes, bytes...)
 			}
 		case parse.SNEQ:
 			switch inst.Format {
 			case CMD_REG_VAL:
-				reg := valueToInt(inst.Tokens[3])
-				val := valueToInt(inst.Tokens[6])
-				op := 0x4000 | ((reg << 8) & 0x0F00) | (val & 0x00FF)
-				first := byte((op & 0xFF00) >> 8)
-				second := byte(op & 0xFF)
-				opcodes = append(opcodes, []byte{first, second}...)
+				bytes := ParseInstruction(0x4000, inst)
+				opcodes = append(opcodes, bytes...)
 			case CMD_REG_REG:
-				reg1 := valueToInt(inst.Tokens[3])
-				reg2 := valueToInt(inst.Tokens[8])
-				op := 0x9000 | ((reg1 << 8) & 0x0F00) | ((reg2 << 4) & 0x00F0)
-				first := byte((op & 0xFF00) >> 8)
-				second := byte(op & 0xFF)
-				opcodes = append(opcodes, []byte{first, second}...)
+				bytes := ParseInstruction(0x9000, inst)
+				opcodes = append(opcodes, bytes...)
 			}
 		case parse.JKP:
-			reg := valueToInt(inst.Tokens[3])
-			op := 0xE09E | ((reg << 8) & 0x0F00)
-			first := byte((op & 0xFF00) >> 8)
-			second := byte(op & 0xFF)
-			opcodes = append(opcodes, []byte{first, second}...)
+			bytes := ParseInstruction(0xE09E, inst)
+			opcodes = append(opcodes, bytes...)
 		case parse.JKNP:
-			reg := valueToInt(inst.Tokens[3])
-			op := 0xE0A1 | ((reg << 8) & 0x0F00)
-			first := byte((op & 0xFF00) >> 8)
-			second := byte(op & 0xFF)
-			opcodes = append(opcodes, []byte{first, second}...)
+			bytes := ParseInstruction(0xE0A1, inst)
+			opcodes = append(opcodes, bytes...)
 		case parse.WK:
-			reg := valueToInt(inst.Tokens[3])
-			op := 0xF00A | ((reg << 8) & 0x0F00)
-			first := byte((op & 0xFF00) >> 8)
-			second := byte(op & 0xFF)
-			opcodes = append(opcodes, []byte{first, second}...)
+			bytes := ParseInstruction(0xF00A, inst)
+			opcodes = append(opcodes, bytes...)
 		case parse.MOV:
 			switch inst.Format {
 			case CMD_REG_VAL:
-				reg := valueToInt(inst.Tokens[3])
-				val := valueToInt(inst.Tokens[6])
-				op := 0x6000 | ((reg << 8) & 0x0F00) | (val & 0x00FF)
-				first := byte((op & 0xFF00) >> 8)
-				second := byte(op & 0xFF)
-				opcodes = append(opcodes, []byte{first, second}...)
+				bytes := ParseInstruction(0x6000, inst)
+				opcodes = append(opcodes, bytes...)
 			case CMD_REG_REG:
-				reg1 := valueToInt(inst.Tokens[3])
-				reg2 := valueToInt(inst.Tokens[8])
-				op := 0x8000 | ((reg1 << 8) & 0x0F00) | ((reg2 << 4) & 0x00F0)
-				first := byte((op & 0xFF00) >> 8)
-				second := byte(op & 0xFF)
-				opcodes = append(opcodes, []byte{first, second}...)
-			case CMD_ADP_VAL:
-				val := valueToInt(inst.Tokens[3])
-				op := 0xA000 | (val & 0x0FFF)
-				first := byte((op & 0xFF00) >> 8)
-				second := byte(op & 0xFF)
-				opcodes = append(opcodes, []byte{first, second}...)
-			case CMD_REG_DLY:
-				reg := valueToInt(inst.Tokens[3])
-				op := 0xF007 | ((reg << 8) & 0x0F00)
-				first := byte((op & 0xFF00) >> 8)
-				second := byte(op & 0xFF)
-				opcodes = append(opcodes, []byte{first, second}...)
-			case CMD_DLY_REG:
+				bytes := ParseInstruction(0x8000, inst)
+				opcodes = append(opcodes, bytes...)
+			case CMD_SPC_VAL:
+				bytes := ParseInstruction(0xA000, inst)
+				opcodes = append(opcodes, bytes...)
+			case CMD_REG_SPC:
+				bytes := ParseInstruction(0xF007, inst)
+				opcodes = append(opcodes, bytes...)
+			case CMD_SPC_REG:
 				if inst.Tokens[1].Type == parse.DELAY {
-					reg := valueToInt(inst.Tokens[5])
-					op := 0xF015 | ((reg << 8) & 0x0F00)
-					first := byte((op & 0xFF00) >> 8)
-					second := byte(op & 0xFF)
-					opcodes = append(opcodes, []byte{first, second}...)
+					bytes := ParseInstruction(0xF015, inst)
+					opcodes = append(opcodes, bytes...)
 				} else { // SND_DELAY
-					reg := valueToInt(inst.Tokens[5])
-					op := 0xF018 | ((reg << 8) & 0x0F00)
-					first := byte((op & 0xFF00) >> 8)
-					second := byte(op & 0xFF)
-					opcodes = append(opcodes, []byte{first, second}...)
+					bytes := ParseInstruction(0xF018, inst)
+					opcodes = append(opcodes, bytes...)
 				}
 			}
 		case parse.ADD:
 			switch inst.Format {
 			case CMD_REG_VAL:
-				reg := valueToInt(inst.Tokens[3])
-				val := valueToInt(inst.Tokens[6])
-				op := 0x7000 | ((reg << 8) & 0x0F00) | (val & 0x00FF)
-				first := byte((op & 0xFF00) >> 8)
-				second := byte(op & 0xFF)
-				opcodes = append(opcodes, []byte{first, second}...)
+				bytes := ParseInstruction(0x7000, inst)
+				opcodes = append(opcodes, bytes...)
 			case CMD_REG_REG:
-				reg1 := valueToInt(inst.Tokens[3])
-				reg2 := valueToInt(inst.Tokens[8])
-				op := 0x8004 | ((reg1 << 8) & 0x0F00) | ((reg2 << 4) & 0x00F0)
-				first := byte((op & 0xFF00) >> 8)
-				second := byte(op & 0xFF)
-				opcodes = append(opcodes, []byte{first, second}...)
-			case CMD_ADP_REG:
-				reg := valueToInt(inst.Tokens[5])
-				op := 0xF01E | ((reg << 8) & 0x0F00)
-				first := byte((op & 0xFF00) >> 8)
-				second := byte(op & 0xFF)
-				opcodes = append(opcodes, []byte{first, second}...)
+				bytes := ParseInstruction(0x8004, inst)
+				opcodes = append(opcodes, bytes...)
+			case CMD_SPC_REG:
+				bytes := ParseInstruction(0xF01E, inst)
+				opcodes = append(opcodes, bytes...)
 			}
 		case parse.SUB: // We're only going to implement VX = VX - VY
-			reg1 := valueToInt(inst.Tokens[3])
-			reg2 := valueToInt(inst.Tokens[8])
-			op := 0x8005 | ((reg1 << 8) & 0x0F00) | ((reg2 << 4) & 0x00F0)
-			first := byte((op & 0xFF00) >> 8)
-			second := byte(op & 0xFF)
-			opcodes = append(opcodes, []byte{first, second}...)
+			bytes := ParseInstruction(0x8005, inst)
+			opcodes = append(opcodes, bytes...)
 		case parse.OR:
-			reg1 := valueToInt(inst.Tokens[3])
-			reg2 := valueToInt(inst.Tokens[8])
-			op := 0x8001 | ((reg1 << 8) & 0x0F00) | ((reg2 << 4) & 0x00F0)
-			first := byte((op & 0xFF00) >> 8)
-			second := byte(op & 0xFF)
-			opcodes = append(opcodes, []byte{first, second}...)
+			bytes := ParseInstruction(0x8001, inst)
+			opcodes = append(opcodes, bytes...)
 		case parse.AND:
-			reg1 := valueToInt(inst.Tokens[3])
-			reg2 := valueToInt(inst.Tokens[8])
-			op := 0x8002 | ((reg1 << 8) & 0x0F00) | ((reg2 << 4) & 0x00F0)
-			first := byte((op & 0xFF00) >> 8)
-			second := byte(op & 0xFF)
-			opcodes = append(opcodes, []byte{first, second}...)
+			bytes := ParseInstruction(0x8002, inst)
+			opcodes = append(opcodes, bytes...)
 		case parse.XOR:
-			reg1 := valueToInt(inst.Tokens[3])
-			reg2 := valueToInt(inst.Tokens[8])
-			op := 0x8003 | ((reg1 << 8) & 0x0F00) | ((reg2 << 4) & 0x00F0)
-			first := byte((op & 0xFF00) >> 8)
-			second := byte(op & 0xFF)
-			opcodes = append(opcodes, []byte{first, second}...)
+			bytes := ParseInstruction(0x8003, inst)
+			opcodes = append(opcodes, bytes...)
 		case parse.SHR:
-			reg := valueToInt(inst.Tokens[3])
-			op := 0x8006 | ((reg << 8) & 0x0F00)
-			first := byte((op & 0xFF00) >> 8)
-			second := byte(op & 0xFF)
-			opcodes = append(opcodes, []byte{first, second}...)
+			bytes := ParseInstruction(0x8006, inst)
+			opcodes = append(opcodes, bytes...)
 		case parse.SHL:
-			reg := valueToInt(inst.Tokens[3])
-			op := 0x800E | ((reg << 8) & 0x0F00)
-			first := byte((op & 0xFF00) >> 8)
-			second := byte(op & 0xFF)
-			opcodes = append(opcodes, []byte{first, second}...)
+			bytes := ParseInstruction(0x800E, inst)
+			opcodes = append(opcodes, bytes...)
 		case parse.BRND:
-			reg := valueToInt(inst.Tokens[3])
-			val := valueToInt(inst.Tokens[6])
-			op := 0xC000 | ((reg << 8) & 0x0F00) | (val & 0x00FF)
-			first := byte((op & 0xFF00) >> 8)
-			second := byte(op & 0xFF)
-			opcodes = append(opcodes, []byte{first, second}...)
+			bytes := ParseInstruction(0xC000, inst)
+			opcodes = append(opcodes, bytes...)
 		case parse.DRW:
-			reg1 := valueToInt(inst.Tokens[3])
-			reg2 := valueToInt(inst.Tokens[8])
-			op := 0xD000 | ((reg1 << 8) & 0x0F00) | ((reg2 << 4) & 0x00F0)
-			first := byte((op & 0xFF00) >> 8)
-			second := byte(op & 0xFF)
-			opcodes = append(opcodes, []byte{first, second}...)
+			bytes := ParseInstruction(0xD000, inst)
+			opcodes = append(opcodes, bytes...)
 		case parse.FX29:
-			reg := valueToInt(inst.Tokens[3])
-			op := 0xF029 | ((reg << 8) & 0x0F00)
-			first := byte((op & 0xFF00) >> 8)
-			second := byte(op & 0xFF)
-			opcodes = append(opcodes, []byte{first, second}...)
+			bytes := ParseInstruction(0xF029, inst)
+			opcodes = append(opcodes, bytes...)
 		case parse.FX33:
-			reg := valueToInt(inst.Tokens[3])
-			op := 0xF033 | ((reg << 8) & 0x0F00)
-			first := byte((op & 0xFF00) >> 8)
-			second := byte(op & 0xFF)
-			opcodes = append(opcodes, []byte{first, second}...)
+			bytes := ParseInstruction(0xF033, inst)
+			opcodes = append(opcodes, bytes...)
 		case parse.FX55: // TODO: These last two need to be entirely worked throughout the system
-			opcodes = append(opcodes, []byte{0xFF, 0x55}...)
+			bytes := ParseInstruction(0xFF55, inst)
+			opcodes = append(opcodes, bytes...)
 		case parse.FX65:
-			opcodes = append(opcodes, []byte{0xFF, 0x65}...)
+			bytes := ParseInstruction(0xFF65, inst)
+			opcodes = append(opcodes, bytes...)
 		}
 	}
 	return opcodes
@@ -256,4 +157,81 @@ func valueToInt(token parse.Token) int {
 		}
 		return int(val)
 	}
+}
+
+func OpcodeToBytes(opcode int) []byte {
+	first := byte(opcode >> 8)
+	second := byte(opcode & 0xFF)
+	return []byte{first, second}
+}
+
+func ParseInstruction(opcode int, instruction Instruction) []byte {
+	switch instruction.Format {
+	case SINGULAR:
+		return ParseSINGULAR(opcode)
+	case CMD_VAL:
+		return OpcodeToBytes(ParseCMD_VAL(opcode, instruction))
+	case CMD_REG:
+		return OpcodeToBytes(ParseCMD_REG(opcode, instruction))
+	case CMD_REG_VAL:
+		return OpcodeToBytes(ParseCMD_REG_VAL(opcode, instruction))
+	case CMD_REG_REG:
+		return OpcodeToBytes(ParseCMD_REG_REG(opcode, instruction))
+	case CMD_REG_SPC:
+		return OpcodeToBytes(ParseCMD_REG_SPC(opcode, instruction))
+	case CMD_SPC_REG:
+		return OpcodeToBytes(ParseCMD_SPC_REG(opcode, instruction))
+	case CMD_SPC_VAL:
+		return OpcodeToBytes(ParseCMD_SPC_VAL(opcode, instruction))
+	}
+	fmt.Printf("This should never be reached! %d %#v\n", opcode, instruction)
+	return []byte{}
+}
+
+func ParseSINGULAR(opcode int) []byte {
+	return OpcodeToBytes(opcode)
+}
+
+func ParseCMD_VAL(opcode int, inst Instruction) int {
+	val := valueToInt(inst.Tokens[1])
+	op := opcode | (0xFFF & val)
+	return op
+}
+
+func ParseCMD_REG(opcode int, inst Instruction) int {
+	reg := valueToInt(inst.Tokens[3])
+	op := opcode | ((reg << 8) & 0x0F00)
+	return op
+}
+
+func ParseCMD_REG_VAL(opcode int, inst Instruction) int {
+	reg := valueToInt(inst.Tokens[3])
+	val := valueToInt(inst.Tokens[6])
+	op := opcode | ((reg << 8) & 0x0F00) | (val & 0x00FF)
+	return op
+}
+
+func ParseCMD_REG_REG(opcode int, inst Instruction) int {
+	reg1 := valueToInt(inst.Tokens[3])
+	reg2 := valueToInt(inst.Tokens[8])
+	op := opcode | ((reg1 << 8) & 0x0F00) | ((reg2 << 4) & 0x00F0)
+	return op
+}
+
+func ParseCMD_REG_SPC(opcode int, inst Instruction) int {
+	reg := valueToInt(inst.Tokens[3])
+	op := opcode | ((reg << 8) & 0x0F00)
+	return op
+}
+
+func ParseCMD_SPC_REG(opcode int, inst Instruction) int {
+	reg := valueToInt(inst.Tokens[5])
+	op := opcode | ((reg << 8) & 0x0F00)
+	return op
+}
+
+func ParseCMD_SPC_VAL(opcode int, inst Instruction) int {
+	val := valueToInt(inst.Tokens[3])
+	op := 0xA000 | (val & 0x0FFF)
+	return op
 }
