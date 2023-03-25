@@ -50,7 +50,7 @@ func (h *Chip8) CPUReset() {
 	h.Memory = [0xFFF]BYTE{}
 
 	// Load in the game
-	gamePath := "./roms/vbrix.rom"
+	gamePath := "RecompiledBrix.chp8"
 	gameFile, err := os.ReadFile(gamePath)
 	if err != nil {
 		panic(err)

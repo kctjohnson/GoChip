@@ -33,6 +33,10 @@ func (p *Parser) ReadTokens() {
 	}
 }
 
+func (p Parser) GetTokens() []Token {
+	return p.tokens
+}
+
 func (p *Parser) Rewind() {
 	p.lexer.Rewind()
 }
