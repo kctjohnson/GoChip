@@ -1,9 +1,10 @@
 package disassembler
 
 import (
-	"chip8-emu/internal/chip8"
-	"chip8-emu/internal/chip8/emulator"
 	"fmt"
+
+	"github.com/kctjohnson/chip8-emu/internal/chip8"
+	"github.com/kctjohnson/chip8-emu/internal/chip8/emulator"
 )
 
 func Disassemble(gameFilePath string) {

@@ -1,11 +1,12 @@
 package emulator
 
 import (
-	"chip8-emu/internal/chip8"
 	"fmt"
 	"math/rand"
 	"os"
 	"time"
+
+	"github.com/kctjohnson/chip8-emu/internal/chip8"
 )
 
 var (

@@ -1,9 +1,10 @@
 package compile
 
 import (
-	"chip8-emu/internal/chip8/parse"
 	"fmt"
 	"strconv"
+
+	"github.com/kctjohnson/chip8-emu/internal/chip8/parse"
 )
 
 type Compiler struct {

@@ -1,14 +1,14 @@
 package main
 
 import (
-	"chip8-emu/internal/chip8/disassembler"
-	"chip8-emu/internal/chip8/emulator"
 	"fmt"
 	"math/rand"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/kctjohnson/chip8-emu/internal/chip8/disassembler"
+	"github.com/kctjohnson/chip8-emu/internal/chip8/emulator"
 )
 
 var (

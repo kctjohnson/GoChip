@@ -1,9 +1,10 @@
 package main
 
 import (
-	"chip8-emu/internal/chip8/compile"
-	"chip8-emu/internal/chip8/parse"
 	"os"
+
+	"github.com/kctjohnson/chip8-emu/internal/chip8/compile"
+	"github.com/kctjohnson/chip8-emu/internal/chip8/parse"
 )
 
 func main() {

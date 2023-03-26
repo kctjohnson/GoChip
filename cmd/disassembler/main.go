@@ -1,9 +1,10 @@
 package main
 
 import (
-	"chip8-emu/internal/chip8/disassembler"
 	"flag"
 	"fmt"
+
+	"github.com/kctjohnson/chip8-emu/internal/chip8/disassembler"
 )
 
 func main() {

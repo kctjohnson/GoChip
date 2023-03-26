@@ -1,4 +1,4 @@
-module chip8-emu
+module github.com/kctjohnson/chip8-emu
 
 go 1.19
 
@@ -7,7 +7,6 @@ require github.com/charmbracelet/bubbletea v0.23.2
 require github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 
 require (
-	github.com/aymanbagabas/go-osc52 v1.2.1 // indirect
 	github.com/charmbracelet/lipgloss v0.7.1
 	github.com/containerd/console v1.0.3 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect

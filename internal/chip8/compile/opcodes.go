@@ -1,8 +1,9 @@
 package compile
 
 import (
-	"chip8-emu/internal/chip8/parse"
 	"fmt"
+
+	"github.com/kctjohnson/chip8-emu/internal/chip8/parse"
 )
 
 type InstructionFormat int
