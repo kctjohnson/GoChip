@@ -1,6 +1,7 @@
-package chip8
+package emulator
 
 import (
+	"chip8-emu/internal/chip8"
 	"fmt"
 	"math/rand"
 	"os"
@@ -8,33 +9,38 @@ import (
 )
 
 var (
-	debug         = false
-	timerCap BYTE = 60
+	debug               = false
+	timerCap chip8.BYTE = 60
 )
 
-type (
-	BYTE uint8
-	WORD uint16
-)
+type Emulator struct {
+	Memory        [0xFFF]chip8.BYTE
+	Registers     [16]chip8.BYTE
+	I             chip8.WORD
+	PC            chip8.WORD
+	Stack         []chip8.WORD
+	Inputs        [16]chip8.BYTE
+	Delay         chip8.BYTE
+	SoundDelay    chip8.BYTE
+	CurrentOpcode chip8.WORD
 
-type Chip8 struct {
-	Memory        [0xFFF]BYTE
-	Registers     [16]BYTE
-	I             WORD
-	PC            WORD
-	Stack         []WORD
-	Inputs        [16]BYTE
-	Delay         BYTE
-	SoundDelay    BYTE
-	CurrentOpcode WORD
+	FilePath string
 
 	LastTick     time.Time
 	DelayEnabled bool
 
-	ScreenData [64][32]BYTE
+	ScreenData [64][32]chip8.BYTE
 }
 
-func (h *Chip8) CPUReset() {
+func NewEmulator(gameFilePath string) *Emulator {
+	emu := &Emulator{
+		FilePath: gameFilePath,
+	}
+	emu.CPUReset()
+	return emu
+}
+
+func (h *Emulator) CPUReset() {
 	// Reset all of the data
 	h.I = 0
 	h.PC = 0x200
@@ -44,35 +50,34 @@ func (h *Chip8) CPUReset() {
 	h.DelayEnabled = true
 	h.Delay = 60
 	h.LastTick = time.Now()
-	h.Stack = []WORD{}
-	h.Inputs = [16]BYTE{}
-	h.ScreenData = [64][32]BYTE{}
-	h.Memory = [0xFFF]BYTE{}
+	h.Stack = []chip8.WORD{}
+	h.Inputs = [16]chip8.BYTE{}
+	h.ScreenData = [64][32]chip8.BYTE{}
+	h.Memory = [0xFFF]chip8.BYTE{}
 
 	// Load in the game
-	gamePath := "RecompiledBrix.chp8"
-	gameFile, err := os.ReadFile(gamePath)
+	gameFile, err := os.ReadFile(h.FilePath)
 	if err != nil {
 		panic(err)
 	}
 
 	for i := range gameFile {
-		h.Memory[i+0x200] = BYTE(gameFile[i])
+		h.Memory[i+0x200] = chip8.BYTE(gameFile[i])
 	}
 }
 
-func (h *Chip8) GetNextOpcode() WORD {
-	res := (WORD(h.Memory[h.PC]) << 8) | WORD(h.Memory[h.PC+1])
+func (h *Emulator) GetNextOpcode() chip8.WORD {
+	res := (chip8.WORD(h.Memory[h.PC]) << 8) | chip8.WORD(h.Memory[h.PC+1])
 	h.CurrentOpcode = res
 	h.PC += 2
 	return res
 }
 
-func (h Chip8) GetOpcode(pc WORD) WORD {
-	return (WORD(h.Memory[pc]) << 8) | WORD(h.Memory[pc+1])
+func (h Emulator) GetOpcode(pc chip8.WORD) chip8.WORD {
+	return (chip8.WORD(h.Memory[pc]) << 8) | chip8.WORD(h.Memory[pc+1])
 }
 
-func (h *Chip8) Step() {
+func (h *Emulator) Step() {
 	op := h.GetNextOpcode()
 
 	switch op & 0xF000 {
@@ -185,7 +190,7 @@ func (h *Chip8) Step() {
 }
 
 // Call machine code routine at NNN
-func (h *Chip8) Opcode0NNN(op WORD) {
+func (h *Emulator) Opcode0NNN(op chip8.WORD) {
 	if debug {
 		fmt.Printf("0NNN: %x\n", op)
 	}
@@ -193,7 +198,7 @@ func (h *Chip8) Opcode0NNN(op WORD) {
 }
 
 // Clear the screen
-func (h *Chip8) Opcode00E0(op WORD) {
+func (h *Emulator) Opcode00E0(op chip8.WORD) {
 	if debug {
 		fmt.Printf("00E0: %x\n", op)
 	}
@@ -205,7 +210,7 @@ func (h *Chip8) Opcode00E0(op WORD) {
 }
 
 // Return from a subroutine
-func (h *Chip8) Opcode00EE(op WORD) {
+func (h *Emulator) Opcode00EE(op chip8.WORD) {
 	if debug {
 		fmt.Printf("00EE: 00%x\n", op)
 	}
@@ -215,7 +220,7 @@ func (h *Chip8) Opcode00EE(op WORD) {
 }
 
 // Jump to address NNN
-func (h *Chip8) Opcode1NNN(op WORD) {
+func (h *Emulator) Opcode1NNN(op chip8.WORD) {
 	if debug {
 		fmt.Printf("1NNN: %x\n", op)
 	}
@@ -223,7 +228,7 @@ func (h *Chip8) Opcode1NNN(op WORD) {
 }
 
 // Call subroutine at NNN
-func (h *Chip8) Opcode2NNN(op WORD) {
+func (h *Emulator) Opcode2NNN(op chip8.WORD) {
 	if debug {
 		fmt.Printf("2NNN: %x\n", op)
 	}
@@ -232,100 +237,100 @@ func (h *Chip8) Opcode2NNN(op WORD) {
 }
 
 // Skips the next instruction if VX equals NN
-func (h *Chip8) Opcode3XNN(op WORD) {
+func (h *Emulator) Opcode3XNN(op chip8.WORD) {
 	if debug {
 		fmt.Printf("3XNN: %x\n", op)
 	}
 	regx := (op & 0x0F00) >> 8
 	nn := op & 0x00FF
-	if WORD(h.Registers[regx]) == nn {
+	if chip8.WORD(h.Registers[regx]) == nn {
 		h.PC += 2
 	}
 }
 
 // Skips the next instruction if VX does not equal NN
-func (h *Chip8) Opcode4XNN(op WORD) {
+func (h *Emulator) Opcode4XNN(op chip8.WORD) {
 	if debug {
 		fmt.Printf("4XNN: %x\n", op)
 	}
 	regx := (op & 0x0F00) >> 8
 	nn := op & 0x00FF
-	if WORD(h.Registers[regx]) != nn {
+	if chip8.WORD(h.Registers[regx]) != nn {
 		h.PC += 2
 	}
 }
 
 // Skips the next instruction if VX equals VY
-func (h *Chip8) Opcode5XY0(op WORD) {
+func (h *Emulator) Opcode5XY0(op chip8.WORD) {
 	if debug {
 		fmt.Printf("5XY0: %x\n", op)
 	}
-	regx, regy := GetXYReg(op)
+	regx, regy := chip8.GetXYReg(op)
 	if h.Registers[regx] == h.Registers[regy] {
 		h.PC += 2
 	}
 }
 
 // Sets VX to NN
-func (h *Chip8) Opcode6XNN(op WORD) {
+func (h *Emulator) Opcode6XNN(op chip8.WORD) {
 	if debug {
 		fmt.Printf("6XNN: %x\n", op)
 	}
 	regx := (op & 0x0F00) >> 8
-	h.Registers[regx] = BYTE(op & 0x00FF)
+	h.Registers[regx] = chip8.BYTE(op & 0x00FF)
 }
 
 // Adds NN to VX (carry flag is not changed)
-func (h *Chip8) Opcode7XNN(op WORD) {
+func (h *Emulator) Opcode7XNN(op chip8.WORD) {
 	if debug {
 		fmt.Printf("7XNN: %x\n", op)
 	}
 	regx := (op & 0x0F00) >> 8
-	h.Registers[regx] += BYTE(op & 0x00FF)
+	h.Registers[regx] += chip8.BYTE(op & 0x00FF)
 }
 
 // Sets VX to the value of VY
-func (h *Chip8) Opcode8XY0(op WORD) {
+func (h *Emulator) Opcode8XY0(op chip8.WORD) {
 	if debug {
 		fmt.Printf("8XY0: %x\n", op)
 	}
-	regx, regy := GetXYReg(op)
+	regx, regy := chip8.GetXYReg(op)
 	h.Registers[regx] = h.Registers[regy]
 }
 
 // Sets VX to VX or VY (bitwise OR operation)
-func (h *Chip8) Opcode8XY1(op WORD) {
+func (h *Emulator) Opcode8XY1(op chip8.WORD) {
 	if debug {
 		fmt.Printf("8XY1: %x\n", op)
 	}
-	regx, regy := GetXYReg(op)
+	regx, regy := chip8.GetXYReg(op)
 	h.Registers[regx] = h.Registers[regx] | h.Registers[regy]
 }
 
 // Sets VX to VX and VY (bitwise AND operation)
-func (h *Chip8) Opcode8XY2(op WORD) {
+func (h *Emulator) Opcode8XY2(op chip8.WORD) {
 	if debug {
 		fmt.Printf("8XY2: %x\n", op)
 	}
-	regx, regy := GetXYReg(op)
+	regx, regy := chip8.GetXYReg(op)
 	h.Registers[regx] = h.Registers[regx] & h.Registers[regy]
 }
 
 // Sets VX to VX xor VY
-func (h *Chip8) Opcode8XY3(op WORD) {
+func (h *Emulator) Opcode8XY3(op chip8.WORD) {
 	if debug {
 		fmt.Printf("8XY3: %x\n", op)
 	}
-	regx, regy := GetXYReg(op)
+	regx, regy := chip8.GetXYReg(op)
 	h.Registers[regx] = h.Registers[regx] ^ h.Registers[regy]
 }
 
 // Adds VY to VX. VF is set to 1 when there's a carry, and to 0 when there is not
-func (h *Chip8) Opcode8XY4(op WORD) {
+func (h *Emulator) Opcode8XY4(op chip8.WORD) {
 	if debug {
 		fmt.Printf("8XY4: %x\n", op)
 	}
-	regx, regy := GetXYReg(op)
+	regx, regy := chip8.GetXYReg(op)
 	if h.Registers[regx]+h.Registers[regy] > 255 {
 		h.Registers[0xF] = 1
 	} else {
@@ -335,12 +340,12 @@ func (h *Chip8) Opcode8XY4(op WORD) {
 }
 
 // VY is subtracted from VX. VF is set to 0 when there's a borrow, and 1 when there is not
-func (h *Chip8) Opcode8XY5(op WORD) {
+func (h *Emulator) Opcode8XY5(op chip8.WORD) {
 	if debug {
 		fmt.Printf("8XY5: %x\n", op)
 	}
 	h.Registers[0xF] = 1
-	regx, regy := GetXYReg(op)
+	regx, regy := chip8.GetXYReg(op)
 	xVal := h.Registers[regx]
 	yVal := h.Registers[regy]
 	if yVal > xVal { // If this is true will result in a value < 0
@@ -350,21 +355,21 @@ func (h *Chip8) Opcode8XY5(op WORD) {
 }
 
 // Stores the least significant bit of VX in VF and then shifts VX to the right by 1
-func (h *Chip8) Opcode8XY6(op WORD) {
+func (h *Emulator) Opcode8XY6(op chip8.WORD) {
 	if debug {
 		fmt.Printf("8XY6: %x\n", op)
 	}
-	regx, _ := GetXYReg(op)
+	regx, _ := chip8.GetXYReg(op)
 	h.Registers[0xF] = h.Registers[regx] & 1
 	h.Registers[regx] >>= 1
 }
 
 // Sets VX to VY minus VX. VF is set to 0 when there's a borrow, and 1 when there is not
-func (h *Chip8) Opcode8XY7(op WORD) {
+func (h *Emulator) Opcode8XY7(op chip8.WORD) {
 	if debug {
 		fmt.Printf("8XY7: %x\n", op)
 	}
-	regx, regy := GetXYReg(op)
+	regx, regy := chip8.GetXYReg(op)
 	if h.Registers[regx] > h.Registers[regy] {
 		h.Registers[0xF] = 0
 	} else {
@@ -374,28 +379,28 @@ func (h *Chip8) Opcode8XY7(op WORD) {
 }
 
 // Stores the most significant bit of VX in VF and then shifts VX to the left by 1
-func (h *Chip8) Opcode8XYE(op WORD) {
+func (h *Emulator) Opcode8XYE(op chip8.WORD) {
 	if debug {
 		fmt.Printf("8XYE: %x\n", op)
 	}
-	regx, _ := GetXYReg(op)
+	regx, _ := chip8.GetXYReg(op)
 	h.Registers[0xF] = h.Registers[regx] & 0x80
 	h.Registers[regx] <<= 1
 }
 
 // Skips the next instruction if VX does not equal VY. (Usually the next instruction is a jump to skip a code block);
-func (h *Chip8) Opcode9XY0(op WORD) {
+func (h *Emulator) Opcode9XY0(op chip8.WORD) {
 	if debug {
 		fmt.Printf("9XY0: %x\n", op)
 	}
-	regx, regy := GetXYReg(op)
+	regx, regy := chip8.GetXYReg(op)
 	if h.Registers[regx] != h.Registers[regy] {
 		h.PC += 2
 	}
 }
 
 // Sets I to the address NNN.
-func (h *Chip8) OpcodeANNN(op WORD) {
+func (h *Emulator) OpcodeANNN(op chip8.WORD) {
 	if debug {
 		fmt.Printf("ANNN: %x\n", op)
 	}
@@ -403,27 +408,27 @@ func (h *Chip8) OpcodeANNN(op WORD) {
 }
 
 // Jumps to the address NNN plus V0.
-func (h *Chip8) OpcodeBNNN(op WORD) {
+func (h *Emulator) OpcodeBNNN(op chip8.WORD) {
 	if debug {
 		fmt.Printf("BNNN: %x\n", op)
 	}
-	h.PC = (op & 0x0FFF) + WORD(h.Registers[0])
+	h.PC = (op & 0x0FFF) + chip8.WORD(h.Registers[0])
 }
 
 // Sets VX to the result of a bitwise and operation on a random number (Typically: 0 to 255) and NN.
-func (h *Chip8) OpcodeCXNN(op WORD) {
+func (h *Emulator) OpcodeCXNN(op chip8.WORD) {
 	if debug {
 		fmt.Printf("CXNN: %x\n", op)
 	}
-	h.Registers[(op&0x0F00)>>8] = BYTE(int((op & 0x00FF)) & rand.Intn(254))
+	h.Registers[(op&0x0F00)>>8] = chip8.BYTE(int((op & 0x00FF)) & rand.Intn(254))
 }
 
 // Draws a sprite at coordinate (VX, VY) that has a width of 8 pixels and a height of N pixels. Each row of 8 pixels is read as bit-coded starting from memory location I; I value does not change after the execution of this instruction. As described above, VF is set to 1 if any screen pixels are flipped from set to unset when the sprite is drawn, and to 0 if that does not happen.
-func (h *Chip8) OpcodeDXYN(op WORD) {
+func (h *Emulator) OpcodeDXYN(op chip8.WORD) {
 	if debug {
 		fmt.Printf("DXYN: %x\n", op)
 	}
-	regx, regy := GetXYReg(op)
+	regx, regy := chip8.GetXYReg(op)
 
 	height := op & 0x000F
 	coordx := h.Registers[regx]
@@ -441,16 +446,16 @@ func (h *Chip8) OpcodeDXYN(op WORD) {
 	}
 
 	// Loop for the amount of vertical lines needed to draw this
-	var yline WORD
+	var yline chip8.WORD
 	for yline = 0; yline < height && yline < 32; yline++ {
 		data := h.Memory[h.I+yline]
 		xpixelinv := 7
 		xpixel := 0
 		for xpixel = 0; xpixel < 8 && xpixel+int(coordx) < 64; {
-			mask := BYTE(1 << xpixelinv)
+			mask := chip8.BYTE(1 << xpixelinv)
 			if data&mask > 0 {
 				x := int(coordx) + xpixel
-				y := WORD(coordy) + yline
+				y := chip8.WORD(coordy) + yline
 
 				if x < 64 && y < 32 {
 					if h.ScreenData[x][y] == 1 {
@@ -468,7 +473,7 @@ func (h *Chip8) OpcodeDXYN(op WORD) {
 }
 
 // Skips the next instruction if the key stored in VX is pressed (usually the next instruction is a jump to skip a code block).
-func (h *Chip8) OpcodeEX9E(op WORD) {
+func (h *Emulator) OpcodeEX9E(op chip8.WORD) {
 	if debug {
 		fmt.Printf("EX9E: %x\n", op)
 	}
@@ -480,7 +485,7 @@ func (h *Chip8) OpcodeEX9E(op WORD) {
 }
 
 // Skips the next instruction if the key stored in VX is not pressed (usually the next instruction is a jump to skip a code block).
-func (h *Chip8) OpcodeEXA1(op WORD) {
+func (h *Emulator) OpcodeEXA1(op chip8.WORD) {
 	if debug {
 		fmt.Printf("EXA1: %x\n", op)
 	}
@@ -493,16 +498,16 @@ func (h *Chip8) OpcodeEXA1(op WORD) {
 }
 
 // Sets VX to the value of the delay timer.
-func (h *Chip8) OpcodeFX07(op WORD) {
+func (h *Emulator) OpcodeFX07(op chip8.WORD) {
 	if debug {
 		fmt.Printf("FX07: %x\n", op)
 	}
-	regx, _ := GetXYReg(op)
+	regx, _ := chip8.GetXYReg(op)
 	h.Registers[regx] = h.Delay
 }
 
 // A key press is awaited, and then stored in VX (blocking operation, all instruction halted until next key event).
-func (h *Chip8) OpcodeFX0A(op WORD) {
+func (h *Emulator) OpcodeFX0A(op chip8.WORD) {
 	if debug {
 		fmt.Printf("FX0A: %x\n", op)
 	}
@@ -510,16 +515,16 @@ func (h *Chip8) OpcodeFX0A(op WORD) {
 }
 
 // Sets the delay timer to VX.
-func (h *Chip8) OpcodeFX15(op WORD) {
+func (h *Emulator) OpcodeFX15(op chip8.WORD) {
 	if debug {
 		fmt.Printf("FX15: %x\n", op)
 	}
-	regx, _ := GetXYReg(op)
+	regx, _ := chip8.GetXYReg(op)
 	h.Delay = h.Registers[regx]
 }
 
 // Sets the sound timer to VX.
-func (h *Chip8) OpcodeFX18(op WORD) {
+func (h *Emulator) OpcodeFX18(op chip8.WORD) {
 	if debug {
 		fmt.Printf("FX18: %x\n", op)
 	}
@@ -527,30 +532,30 @@ func (h *Chip8) OpcodeFX18(op WORD) {
 }
 
 // Adds VX to I. VF is not affected
-func (h *Chip8) OpcodeFX1E(op WORD) {
+func (h *Emulator) OpcodeFX1E(op chip8.WORD) {
 	if debug {
 		fmt.Printf("FX1E: %x\n", op)
 	}
 	regx := (op & 0x0F00) >> 8
-	if h.I+WORD(h.Registers[regx]) > 0xFFF {
+	if h.I+chip8.WORD(h.Registers[regx]) > 0xFFF {
 		h.Registers[0xF] = 1
 	} else {
 		h.Registers[0xF] = 0
 	}
-	h.I += WORD(h.Registers[regx])
+	h.I += chip8.WORD(h.Registers[regx])
 }
 
 // Sets I to the location of the sprite for the character in VX. Characters 0-F (in hexadecimal) are represented by a 4x5 font.
-func (h *Chip8) OpcodeFX29(op WORD) {
+func (h *Emulator) OpcodeFX29(op chip8.WORD) {
 	if debug {
 		fmt.Printf("FX29: %x\n", op)
 	}
 	regx := (op & 0x0F00) >> 8
-	h.I = WORD(h.Registers[regx]) * 0x5
+	h.I = chip8.WORD(h.Registers[regx]) * 0x5
 }
 
 // Stores the binary-coded decimal representation of VX, with the hundreds digit in memory at location in I, the tens digit at location I+1, and the ones digit at location I+2.
-func (h *Chip8) OpcodeFX33(op WORD) {
+func (h *Emulator) OpcodeFX33(op chip8.WORD) {
 	if debug {
 		fmt.Printf("FX33: %x\n", op)
 	}
@@ -567,19 +572,19 @@ func (h *Chip8) OpcodeFX33(op WORD) {
 }
 
 // Stores from V0 to VX (including VX) in memory, starting at address I. The offset from I is increased by 1 for each value written, but I itself is left unmodified.[d]
-func (h *Chip8) OpcodeFX55(op WORD) {
+func (h *Emulator) OpcodeFX55(op chip8.WORD) {
 	if debug {
 		fmt.Printf("FX55: %x\n", op)
 	}
 	regx := (op & 0x0F00) >> 8
-	for i := 0; WORD(i) <= regx; i++ {
-		h.Memory[h.I+WORD(i)] = h.Registers[i]
+	for i := 0; chip8.WORD(i) <= regx; i++ {
+		h.Memory[h.I+chip8.WORD(i)] = h.Registers[i]
 	}
 	h.I = h.I + regx + 1
 }
 
 // Fills from V0 to VX (including VX) with values from memory, starting at address I. The offset from I is increased by 1 for each value read, but I itself is left unmodified.[d]
-func (h *Chip8) OpcodeFX65(op WORD) {
+func (h *Emulator) OpcodeFX65(op chip8.WORD) {
 	if debug {
 		fmt.Printf("FX65: %x\n", op)
 	}
@@ -588,12 +593,4 @@ func (h *Chip8) OpcodeFX65(op WORD) {
 	for i := 0; i <= int(regx); i++ {
 		h.Registers[i] = h.Memory[int(h.I)+i]
 	}
-}
-
-func GetXYReg(op WORD) (WORD, WORD) {
-	regx := op & 0x0F00 // Mask off reg x
-	regx = regx >> 8    // Shift x across
-	regy := op & 0x00F0 // Mask off reg y
-	regy = regy >> 4    // Shift y across
-	return regx, regy
 }

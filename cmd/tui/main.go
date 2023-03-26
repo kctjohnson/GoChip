@@ -1,7 +1,8 @@
 package main
 
 import (
-	"chip8-emu/internal/chip8"
+	"chip8-emu/internal/chip8/disassembler"
+	"chip8-emu/internal/chip8/emulator"
 	"fmt"
 	"math/rand"
 	"time"
@@ -20,7 +21,7 @@ const FPS = 240
 type TickMsg time.Time
 
 type Model struct {
-	emu chip8.Chip8
+	emu *emulator.Emulator
 }
 
 func (m Model) Init() tea.Cmd {
@@ -129,7 +130,7 @@ func (m Model) debugView() string {
 		if pc == m.emu.PC {
 			disassembly += "> "
 		}
-		disassembly += fmt.Sprintf("0x%04X ", pc) + m.emu.DisassembleOpcode(op) + "\n"
+		disassembly += fmt.Sprintf("0x%04X ", pc) + disassembler.DisassembleOpcode(op) + "\n"
 	}
 	disassembly = lipgloss.PlaceHorizontal(50, lipgloss.Top, disassembly)
 
@@ -184,14 +185,11 @@ func main() {
 	rand.Seed(int64(time.Now().Nanosecond()))
 
 	model := Model{
-		emu: chip8.Chip8{},
+		emu: emulator.NewEmulator("./roms/brix.rom"),
 	}
-	model.emu.CPUReset()
 
-	model.emu.Disassemble()
-
-	// p := tea.NewProgram(model, tea.WithAltScreen())
-	// if _, err := p.Run(); err != nil {
-	// 	panic(err)
-	// }
+	p := tea.NewProgram(model, tea.WithAltScreen())
+	if _, err := p.Run(); err != nil {
+		panic(err)
+	}
 }
