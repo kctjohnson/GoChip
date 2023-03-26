@@ -1,4 +1,8 @@
-A bunch of tooling for working with Chip8, including a language parser, disassembler, compiler, and emulator.
+A bunch of tooling for working with Chip-8, including a language parser, disassembler, compiler, and emulator.
+
+# TODO
+
+I need to finish sound emulation. Also need to get the last two F instructions working properly with compilation
 
 # CREDITS
 
