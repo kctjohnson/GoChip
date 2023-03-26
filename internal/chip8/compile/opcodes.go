@@ -9,7 +9,7 @@ import (
 type InstructionFormat int
 
 const (
-	SINGULAR InstructionFormat = iota
+	CMD InstructionFormat = iota
 	CMD_VAL
 	CMD_REG
 	CMD_REG_VAL
@@ -49,7 +49,7 @@ func (is *InstructionSet) parse(tokens []parse.Token) {
 			return
 		case parse.CLS:
 			is.Instructions = append(is.Instructions, Instruction{
-				Format: SINGULAR,
+				Format: CMD,
 				Tokens: []parse.Token{curToken},
 			})
 		case parse.SYSCALL:
@@ -66,7 +66,7 @@ func (is *InstructionSet) parse(tokens []parse.Token) {
 			i++
 		case parse.RET:
 			is.Instructions = append(is.Instructions, Instruction{
-				Format: SINGULAR,
+				Format: CMD,
 				Tokens: []parse.Token{curToken},
 			})
 		case parse.JMP:
@@ -254,13 +254,13 @@ func (is *InstructionSet) parse(tokens []parse.Token) {
 			i += 4
 		case parse.FX55:
 			is.Instructions = append(is.Instructions, Instruction{
-				Format: SINGULAR,
-				Tokens: []parse.Token{curToken},
+				Format: CMD_REG,
+				Tokens: tokens[i : i+5],
 			})
 		case parse.FX65:
 			is.Instructions = append(is.Instructions, Instruction{
-				Format: SINGULAR,
-				Tokens: []parse.Token{curToken},
+				Format: CMD_REG,
+				Tokens: tokens[i : i+5],
 			})
 		}
 	}

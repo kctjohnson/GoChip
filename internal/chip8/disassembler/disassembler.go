@@ -139,14 +139,16 @@ func DisassembleOpcode(op chip8.WORD) string {
 			regx, _ := chip8.GetXYReg(op)
 			str += fmt.Sprintf("FX33 reg[0x%X]\n", regx)
 		case 0x55:
-			str += fmt.Sprintf("FX55\n")
+			regx, _ := chip8.GetXYReg(op)
+			str += fmt.Sprintf("FX55 reg[0x%X]\n", regx)
 		case 0x65:
-			str += fmt.Sprintf("FX65\n")
+			regx, _ := chip8.GetXYReg(op)
+			str += fmt.Sprintf("FX65 reg[0x%X]\n", regx)
 		default:
-			str += fmt.Sprintf("Something went wrong!\n")
+			str += "Something went wrong!\n"
 		}
 	default:
-		str += fmt.Sprintf("Something went wrong!\n")
+		str += "Something went wrong!\n"
 	}
 	return str
 }

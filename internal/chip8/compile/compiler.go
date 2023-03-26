@@ -25,10 +25,10 @@ type mapKey struct {
 }
 
 var OpcodeMap = map[mapKey]int{
-	{Type: parse.CLS, Format: SINGULAR}:     0x00E0,
+	{Type: parse.CLS, Format: CMD}:          0x00E0,
 	{Type: parse.SYSCALL, Format: CMD_VAL}:  0x0000,
 	{Type: parse.CALL, Format: CMD_VAL}:     0x0000,
-	{Type: parse.RET, Format: SINGULAR}:     0x00EE,
+	{Type: parse.RET, Format: CMD}:          0x00EE,
 	{Type: parse.JMP, Format: CMD_VAL}:      0x1000,
 	{Type: parse.RJMP, Format: CMD_VAL}:     0xB000,
 	{Type: parse.SEQ, Format: CMD_REG_REG}:  0x5000,
@@ -55,8 +55,8 @@ var OpcodeMap = map[mapKey]int{
 	{Type: parse.DRW, Format: CMD_REG_REG}:  0xD000,
 	{Type: parse.FX29, Format: CMD_REG}:     0xF029,
 	{Type: parse.FX33, Format: CMD_REG}:     0xF033,
-	{Type: parse.FX55, Format: SINGULAR}:    0xFF55,
-	{Type: parse.FX65, Format: SINGULAR}:    0xFF65,
+	{Type: parse.FX55, Format: CMD_REG}:     0xF055,
+	{Type: parse.FX65, Format: CMD_REG}:     0xF065,
 }
 
 func (c Compiler) Compile() []byte {
@@ -112,8 +112,8 @@ func OpcodeToBytes(opcode int) []byte {
 
 func ParseInstruction(opcode int, instruction Instruction) []byte {
 	switch instruction.Format {
-	case SINGULAR:
-		return ParseSINGULAR(opcode)
+	case CMD:
+		return ParseCMD(opcode)
 	case CMD_VAL:
 		return OpcodeToBytes(ParseCMD_VAL(opcode, instruction))
 	case CMD_REG:
@@ -133,7 +133,7 @@ func ParseInstruction(opcode int, instruction Instruction) []byte {
 	return []byte{}
 }
 
-func ParseSINGULAR(opcode int) []byte {
+func ParseCMD(opcode int) []byte {
 	return OpcodeToBytes(opcode)
 }
 

@@ -80,8 +80,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.emu.Inputs[14] = 1
 		case "v":
 			m.emu.Inputs[15] = 1
-		case "m":
-			m.emu.DelayEnabled = !m.emu.DelayEnabled
 		case "p":
 			speed = !speed
 		case "ctrl+r":
@@ -106,7 +104,7 @@ func (m Model) View() string {
 }
 
 func (m Model) debugView() string {
-	debugData := fmt.Sprintf("CurOp: %X\nDelay: %d\nADP: %X\nPC: %X\n", m.emu.CurrentOpcode, m.emu.Delay, m.emu.I, m.emu.PC)
+	debugData := fmt.Sprintf("CurOp: %X\nDelay: %d\nSound Delay: %d\nADP: %X\nPC: %X\n", m.emu.CurrentOpcode, m.emu.Delay, m.emu.SoundDelay, m.emu.I, m.emu.PC)
 	for i, r := range m.emu.Registers {
 		debugData += fmt.Sprintf("Reg%X: %X\n", i, r)
 	}

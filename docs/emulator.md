@@ -27,4 +27,3 @@ Z X C V
 `p: Pause the game`  
 `n: When paused, step one instruction forward`  
 `?: Switch to debug mode`  
-`m: Toggle the delay timer`
