@@ -18,125 +18,69 @@ func NewCompiler(tokens []parse.Token) *Compiler {
 	}
 }
 
+type mapKey struct {
+	Type   parse.TokenType
+	Format InstructionFormat
+}
+
+var OpcodeMap = map[mapKey]int{
+	{Type: parse.CLS, Format: SINGULAR}:     0x00E0,
+	{Type: parse.SYSCALL, Format: CMD_VAL}:  0x0000,
+	{Type: parse.CALL, Format: CMD_VAL}:     0x0000,
+	{Type: parse.RET, Format: SINGULAR}:     0x00EE,
+	{Type: parse.JMP, Format: CMD_VAL}:      0x1000,
+	{Type: parse.RJMP, Format: CMD_VAL}:     0xB000,
+	{Type: parse.SEQ, Format: CMD_REG_REG}:  0x5000,
+	{Type: parse.SEQ, Format: CMD_REG_VAL}:  0x3000,
+	{Type: parse.SNEQ, Format: CMD_REG_REG}: 0x9000,
+	{Type: parse.SNEQ, Format: CMD_REG_VAL}: 0x4000,
+	{Type: parse.JKP, Format: CMD_REG}:      0xE09E,
+	{Type: parse.JKNP, Format: CMD_REG}:     0xE0A1,
+	{Type: parse.WK, Format: CMD_REG}:       0xF00A,
+	{Type: parse.MOV, Format: CMD_REG_REG}:  0x8000,
+	{Type: parse.MOV, Format: CMD_REG_SPC}:  0xF007,
+	{Type: parse.MOV, Format: CMD_REG_VAL}:  0x6000,
+	{Type: parse.MOV, Format: CMD_SPC_VAL}:  0xA000,
+	{Type: parse.ADD, Format: CMD_REG_REG}:  0x8004,
+	{Type: parse.ADD, Format: CMD_REG_VAL}:  0x7000,
+	{Type: parse.ADD, Format: CMD_SPC_REG}:  0xF01E,
+	{Type: parse.SUB, Format: CMD_REG_REG}:  0x8005,
+	{Type: parse.OR, Format: CMD_REG_REG}:   0x8001,
+	{Type: parse.AND, Format: CMD_REG_REG}:  0x8002,
+	{Type: parse.XOR, Format: CMD_REG_REG}:  0x8003,
+	{Type: parse.SHR, Format: CMD_REG}:      0x8006,
+	{Type: parse.SHL, Format: CMD_REG}:      0x800E,
+	{Type: parse.BRND, Format: CMD_REG}:     0xC000,
+	{Type: parse.DRW, Format: CMD_REG_REG}:  0xD000,
+	{Type: parse.FX29, Format: CMD_REG}:     0xF029,
+	{Type: parse.FX33, Format: CMD_REG}:     0xF033,
+	{Type: parse.FX55, Format: SINGULAR}:    0xFF55,
+	{Type: parse.FX65, Format: SINGULAR}:    0xFF65,
+}
+
 func (c Compiler) Compile() []byte {
 	opcodes := []byte{}
 	for _, inst := range c.Instructions.Instructions {
-		switch inst.Tokens[0].Type {
-		case parse.CLS:
-			bytes := ParseInstruction(0x00E0, inst)
-			opcodes = append(opcodes, bytes...)
-		case parse.SYSCALL:
-			bytes := ParseInstruction(0x0000, inst)
-			opcodes = append(opcodes, bytes...)
-		case parse.CALL:
-			bytes := ParseInstruction(0x2000, inst)
-			opcodes = append(opcodes, bytes...)
-		case parse.RET:
-			bytes := ParseInstruction(0x00EE, inst)
-			opcodes = append(opcodes, bytes...)
-		case parse.JMP:
-			bytes := ParseInstruction(0x1000, inst)
-			opcodes = append(opcodes, bytes...)
-		case parse.RJMP:
-			bytes := ParseInstruction(0xB000, inst)
-			opcodes = append(opcodes, bytes...)
-		case parse.SEQ:
-			switch inst.Format {
-			case CMD_REG_VAL:
-				bytes := ParseInstruction(0x3000, inst)
+		// MOV is a special case due to sound delay and time delay
+		if inst.Tokens[0].Type == parse.MOV && inst.Format == CMD_SPC_REG {
+			if inst.Tokens[1].Type == parse.DELAY {
+				bytes := ParseInstruction(0xF015, inst)
 				opcodes = append(opcodes, bytes...)
-			case CMD_REG_REG:
-				bytes := ParseInstruction(0x5000, inst)
+			} else { // SND_DELAY
+				bytes := ParseInstruction(0xF018, inst)
 				opcodes = append(opcodes, bytes...)
 			}
-		case parse.SNEQ:
-			switch inst.Format {
-			case CMD_REG_VAL:
-				bytes := ParseInstruction(0x4000, inst)
-				opcodes = append(opcodes, bytes...)
-			case CMD_REG_REG:
-				bytes := ParseInstruction(0x9000, inst)
-				opcodes = append(opcodes, bytes...)
+		} else {
+			opValue, ok := OpcodeMap[mapKey{
+				Type:   inst.Tokens[0].Type,
+				Format: inst.Format,
+			}]
+
+			if !ok {
+				panic(fmt.Sprintf("Invalid instruction! %#v\n", inst))
 			}
-		case parse.JKP:
-			bytes := ParseInstruction(0xE09E, inst)
-			opcodes = append(opcodes, bytes...)
-		case parse.JKNP:
-			bytes := ParseInstruction(0xE0A1, inst)
-			opcodes = append(opcodes, bytes...)
-		case parse.WK:
-			bytes := ParseInstruction(0xF00A, inst)
-			opcodes = append(opcodes, bytes...)
-		case parse.MOV:
-			switch inst.Format {
-			case CMD_REG_VAL:
-				bytes := ParseInstruction(0x6000, inst)
-				opcodes = append(opcodes, bytes...)
-			case CMD_REG_REG:
-				bytes := ParseInstruction(0x8000, inst)
-				opcodes = append(opcodes, bytes...)
-			case CMD_SPC_VAL:
-				bytes := ParseInstruction(0xA000, inst)
-				opcodes = append(opcodes, bytes...)
-			case CMD_REG_SPC:
-				bytes := ParseInstruction(0xF007, inst)
-				opcodes = append(opcodes, bytes...)
-			case CMD_SPC_REG:
-				if inst.Tokens[1].Type == parse.DELAY {
-					bytes := ParseInstruction(0xF015, inst)
-					opcodes = append(opcodes, bytes...)
-				} else { // SND_DELAY
-					bytes := ParseInstruction(0xF018, inst)
-					opcodes = append(opcodes, bytes...)
-				}
-			}
-		case parse.ADD:
-			switch inst.Format {
-			case CMD_REG_VAL:
-				bytes := ParseInstruction(0x7000, inst)
-				opcodes = append(opcodes, bytes...)
-			case CMD_REG_REG:
-				bytes := ParseInstruction(0x8004, inst)
-				opcodes = append(opcodes, bytes...)
-			case CMD_SPC_REG:
-				bytes := ParseInstruction(0xF01E, inst)
-				opcodes = append(opcodes, bytes...)
-			}
-		case parse.SUB: // We're only going to implement VX = VX - VY
-			bytes := ParseInstruction(0x8005, inst)
-			opcodes = append(opcodes, bytes...)
-		case parse.OR:
-			bytes := ParseInstruction(0x8001, inst)
-			opcodes = append(opcodes, bytes...)
-		case parse.AND:
-			bytes := ParseInstruction(0x8002, inst)
-			opcodes = append(opcodes, bytes...)
-		case parse.XOR:
-			bytes := ParseInstruction(0x8003, inst)
-			opcodes = append(opcodes, bytes...)
-		case parse.SHR:
-			bytes := ParseInstruction(0x8006, inst)
-			opcodes = append(opcodes, bytes...)
-		case parse.SHL:
-			bytes := ParseInstruction(0x800E, inst)
-			opcodes = append(opcodes, bytes...)
-		case parse.BRND:
-			bytes := ParseInstruction(0xC000, inst)
-			opcodes = append(opcodes, bytes...)
-		case parse.DRW:
-			bytes := ParseInstruction(0xD000, inst)
-			opcodes = append(opcodes, bytes...)
-		case parse.FX29:
-			bytes := ParseInstruction(0xF029, inst)
-			opcodes = append(opcodes, bytes...)
-		case parse.FX33:
-			bytes := ParseInstruction(0xF033, inst)
-			opcodes = append(opcodes, bytes...)
-		case parse.FX55: // TODO: These last two need to be entirely worked throughout the system
-			bytes := ParseInstruction(0xFF55, inst)
-			opcodes = append(opcodes, bytes...)
-		case parse.FX65:
-			bytes := ParseInstruction(0xFF65, inst)
+
+			bytes := ParseInstruction(opValue, inst)
 			opcodes = append(opcodes, bytes...)
 		}
 	}
