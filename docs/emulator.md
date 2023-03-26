@@ -15,7 +15,8 @@ The emulator takes in any Chip-8 rom file, either ones you've found, or written 
 
 The left side of the keyboard is mapped to the chip-8 keys.  
 
-```1 2 3 4
+```
+1 2 3 4
 Q W E R
 A S D F
 Z X C V
