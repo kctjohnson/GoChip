@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"math/rand"
 	"time"
@@ -182,10 +183,18 @@ func (m Model) gameView() string {
 }
 
 func main() {
+	inputPath := flag.String("in", "", "Input file")
+	flag.Parse()
+
+	if *inputPath == "" {
+		fmt.Printf("Missing input path argument")
+		return
+	}
+
 	rand.Seed(int64(time.Now().Nanosecond()))
 
 	model := Model{
-		emu: emulator.NewEmulator("./roms/brix.rom"),
+		emu: emulator.NewEmulator(*inputPath),
 	}
 
 	p := tea.NewProgram(model, tea.WithAltScreen())
