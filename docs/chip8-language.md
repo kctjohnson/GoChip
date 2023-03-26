@@ -6,6 +6,17 @@ This was entirely made up based on what I saw on the wiki, so if it differes fro
 of other chip-8 disassemblers, it's because I tossed it together so that I could read the
 rom code easier.
 
+## Example
+
+```CLS
+MOV REG[0x0], 0
+ADD REG[0x0], 1
+MOV REG[0x1], REG[0x0]
+SNEQ REG[0x0], 0xF
+JMP 0x202
+JMP 0x204
+```
+
 ## Commands
 
 The format column is how the instruction is formatted.  
@@ -19,6 +30,9 @@ CMD_REG_SPC
 CMD_SPC_REG
 CMD_SPC_VAL
 ```  
+
+All addresses must be provided starting at 0x200.  
+
 
 | Command | Description                                                                     | Format      | Example                   |
 | ------- | ------------------------------------------------------------------------------- | ----------- | ------------------------- |
