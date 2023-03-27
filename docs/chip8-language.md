@@ -73,7 +73,7 @@ All addresses must be provided starting at 0x200.
 
 ## Labels
 
-You can put labels in your code to jump to rather that figuring out and writing
+You can put labels in your code to jump to rather than figuring out and writing
 jump addresses yourself.
 
 ```MOV REG[0], 0
