@@ -44,6 +44,7 @@ func (h *Emulator) CPUReset() {
 		h.Registers[i] = 0
 	}
 	h.Delay = 0
+	h.SoundDelay = 0
 	h.LastTick = time.Now()
 	h.Stack = []chip8.WORD{}
 	h.Inputs = [16]chip8.BYTE{}
@@ -145,6 +146,8 @@ func (h *Emulator) Step() {
 			h.OpcodeFX0A(op)
 		case 0x15:
 			h.OpcodeFX15(op)
+		case 0x18:
+			h.OpcodeFX18(op)
 		case 0x1E:
 			h.OpcodeFX1E(op)
 		case 0x29:
