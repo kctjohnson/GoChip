@@ -360,23 +360,21 @@ func (h *Emulator) OpcodeDXYN(op chip8.WORD) {
 
 	// Loop for the amount of vertical lines needed to draw this
 	var yline chip8.WORD
-	for yline = 0; yline < height && yline < 32; yline++ {
+	for yline = 0; yline < height; yline++ {
 		data := h.Memory[h.I+yline]
 		xpixelinv := 7
 		xpixel := 0
-		for xpixel = 0; xpixel < 8 && xpixel+int(coordx) < 64; {
+		for xpixel = 0; xpixel < 8; {
 			mask := chip8.BYTE(1 << xpixelinv)
 			if data&mask > 0 {
-				x := int(coordx) + xpixel
-				y := chip8.WORD(coordy) + yline
+				x := (int(coordx) + xpixel) % 64
+				y := (chip8.WORD(coordy) + yline) % 32
 
-				if x < 64 && y < 32 {
-					if h.ScreenData[x][y] == 1 {
-						h.Registers[0xF] = 1 // Collision
-						h.ScreenData[x][y] = 2
-					} else {
-						h.ScreenData[x][y] ^= 1
-					}
+				if h.ScreenData[x][y] == 1 {
+					h.Registers[0xF] = 1 // Collision
+					h.ScreenData[x][y] = 2
+				} else {
+					h.ScreenData[x][y] ^= 1
 				}
 			}
 			xpixel++
