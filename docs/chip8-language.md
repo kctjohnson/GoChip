@@ -29,6 +29,7 @@ CMD_REG_REG
 CMD_REG_SPC
 CMD_SPC_REG
 CMD_SPC_VAL
+CMD_REG_REG_VAL
 ```  
 
 All addresses must be provided starting at 0x200.  
