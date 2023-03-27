@@ -27,7 +27,7 @@ type mapKey struct {
 var OpcodeMap = map[mapKey]int{
 	{Type: parser.CLS, Format: CMD}:             0x00E0,
 	{Type: parser.SYSCALL, Format: CMD_VAL}:     0x0000,
-	{Type: parser.CALL, Format: CMD_VAL}:        0x0000,
+	{Type: parser.CALL, Format: CMD_VAL}:        0x2000,
 	{Type: parser.RET, Format: CMD}:             0x00EE,
 	{Type: parser.JMP, Format: CMD_VAL}:         0x1000,
 	{Type: parser.RJMP, Format: CMD_VAL}:        0xB000,
