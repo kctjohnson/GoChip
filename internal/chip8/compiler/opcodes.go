@@ -150,7 +150,7 @@ func (is *InstructionSet) parse(tokens []parser.Token) {
 					})
 					i += 6
 				}
-			case parser.ADP:
+			case parser.I:
 				is.Instructions = append(is.Instructions, Instruction{
 					Format: CMD_SPC_VAL,
 					Tokens: tokens[i : i+4],
@@ -186,7 +186,7 @@ func (is *InstructionSet) parse(tokens []parser.Token) {
 					})
 					i += 6
 				}
-			case parser.ADP:
+			case parser.I:
 				is.Instructions = append(is.Instructions, Instruction{
 					Format: CMD_SPC_REG,
 					Tokens: tokens[i : i+7],

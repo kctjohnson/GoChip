@@ -95,7 +95,7 @@ func DisassembleOpcode(op chip8.WORD) string {
 		regx, regy := chip8.GetXYReg(op)
 		str += fmt.Sprintf("SNEQ reg[0x%X], reg[0x%X]\n", regx, regy)
 	case 0xA000:
-		str += fmt.Sprintf("MOV ADP, %d\n", op&0x0FFF)
+		str += fmt.Sprintf("MOV I, %d\n", op&0x0FFF)
 	case 0xB000:
 		str += fmt.Sprintf("RJMP 0x%X\n", op&0x0FFF)
 	case 0xC000:
@@ -132,7 +132,7 @@ func DisassembleOpcode(op chip8.WORD) string {
 			str += fmt.Sprintf("MOV SND_DELAY, reg[0x%X]\n", regx)
 		case 0x1E:
 			regx, _ := chip8.GetXYReg(op)
-			str += fmt.Sprintf("ADD ADP, reg[0x%X]\n", regx)
+			str += fmt.Sprintf("ADD I, reg[0x%X]\n", regx)
 		case 0x29:
 			regx, _ := chip8.GetXYReg(op)
 			str += fmt.Sprintf("FX29 reg[0x%X]\n", regx)

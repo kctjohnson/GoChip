@@ -27,7 +27,7 @@ const (
 	DECIMAL = "DECIMAL"
 
 	// Keywords
-	ADP       = "ADP"
+	I         = "I"
 	DELAY     = "DELAY"
 	SND_DELAY = "SND_DELAY"
 	REG       = "REG"
@@ -59,7 +59,7 @@ const (
 )
 
 var keywords = map[string]TokenType{
-	"adp":       ADP,
+	"i":         I,
 	"delay":     DELAY,
 	"snd_delay": SND_DELAY,
 	"reg":       REG,
