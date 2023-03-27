@@ -25,38 +25,38 @@ type mapKey struct {
 }
 
 var OpcodeMap = map[mapKey]int{
-	{Type: parser.CLS, Format: CMD}:          0x00E0,
-	{Type: parser.SYSCALL, Format: CMD_VAL}:  0x0000,
-	{Type: parser.CALL, Format: CMD_VAL}:     0x0000,
-	{Type: parser.RET, Format: CMD}:          0x00EE,
-	{Type: parser.JMP, Format: CMD_VAL}:      0x1000,
-	{Type: parser.RJMP, Format: CMD_VAL}:     0xB000,
-	{Type: parser.SEQ, Format: CMD_REG_REG}:  0x5000,
-	{Type: parser.SEQ, Format: CMD_REG_VAL}:  0x3000,
-	{Type: parser.SNEQ, Format: CMD_REG_REG}: 0x9000,
-	{Type: parser.SNEQ, Format: CMD_REG_VAL}: 0x4000,
-	{Type: parser.JKP, Format: CMD_REG}:      0xE09E,
-	{Type: parser.JKNP, Format: CMD_REG}:     0xE0A1,
-	{Type: parser.WK, Format: CMD_REG}:       0xF00A,
-	{Type: parser.MOV, Format: CMD_REG_REG}:  0x8000,
-	{Type: parser.MOV, Format: CMD_REG_SPC}:  0xF007,
-	{Type: parser.MOV, Format: CMD_REG_VAL}:  0x6000,
-	{Type: parser.MOV, Format: CMD_SPC_VAL}:  0xA000,
-	{Type: parser.ADD, Format: CMD_REG_REG}:  0x8004,
-	{Type: parser.ADD, Format: CMD_REG_VAL}:  0x7000,
-	{Type: parser.ADD, Format: CMD_SPC_REG}:  0xF01E,
-	{Type: parser.SUB, Format: CMD_REG_REG}:  0x8005,
-	{Type: parser.OR, Format: CMD_REG_REG}:   0x8001,
-	{Type: parser.AND, Format: CMD_REG_REG}:  0x8002,
-	{Type: parser.XOR, Format: CMD_REG_REG}:  0x8003,
-	{Type: parser.SHR, Format: CMD_REG}:      0x8006,
-	{Type: parser.SHL, Format: CMD_REG}:      0x800E,
-	{Type: parser.BRND, Format: CMD_REG}:     0xC000,
-	{Type: parser.DRW, Format: CMD_REG_REG}:  0xD000,
-	{Type: parser.FX29, Format: CMD_REG}:     0xF029,
-	{Type: parser.FX33, Format: CMD_REG}:     0xF033,
-	{Type: parser.FX55, Format: CMD_REG}:     0xF055,
-	{Type: parser.FX65, Format: CMD_REG}:     0xF065,
+	{Type: parser.CLS, Format: CMD}:             0x00E0,
+	{Type: parser.SYSCALL, Format: CMD_VAL}:     0x0000,
+	{Type: parser.CALL, Format: CMD_VAL}:        0x0000,
+	{Type: parser.RET, Format: CMD}:             0x00EE,
+	{Type: parser.JMP, Format: CMD_VAL}:         0x1000,
+	{Type: parser.RJMP, Format: CMD_VAL}:        0xB000,
+	{Type: parser.SEQ, Format: CMD_REG_REG}:     0x5000,
+	{Type: parser.SEQ, Format: CMD_REG_VAL}:     0x3000,
+	{Type: parser.SNEQ, Format: CMD_REG_REG}:    0x9000,
+	{Type: parser.SNEQ, Format: CMD_REG_VAL}:    0x4000,
+	{Type: parser.JKP, Format: CMD_REG}:         0xE09E,
+	{Type: parser.JKNP, Format: CMD_REG}:        0xE0A1,
+	{Type: parser.WK, Format: CMD_REG}:          0xF00A,
+	{Type: parser.MOV, Format: CMD_REG_REG}:     0x8000,
+	{Type: parser.MOV, Format: CMD_REG_SPC}:     0xF007,
+	{Type: parser.MOV, Format: CMD_REG_VAL}:     0x6000,
+	{Type: parser.MOV, Format: CMD_SPC_VAL}:     0xA000,
+	{Type: parser.ADD, Format: CMD_REG_REG}:     0x8004,
+	{Type: parser.ADD, Format: CMD_REG_VAL}:     0x7000,
+	{Type: parser.ADD, Format: CMD_SPC_REG}:     0xF01E,
+	{Type: parser.SUB, Format: CMD_REG_REG}:     0x8005,
+	{Type: parser.OR, Format: CMD_REG_REG}:      0x8001,
+	{Type: parser.AND, Format: CMD_REG_REG}:     0x8002,
+	{Type: parser.XOR, Format: CMD_REG_REG}:     0x8003,
+	{Type: parser.SHR, Format: CMD_REG}:         0x8006,
+	{Type: parser.SHL, Format: CMD_REG}:         0x800E,
+	{Type: parser.BRND, Format: CMD_REG}:        0xC000,
+	{Type: parser.DRW, Format: CMD_REG_REG_VAL}: 0xD000,
+	{Type: parser.FX29, Format: CMD_REG}:        0xF029,
+	{Type: parser.FX33, Format: CMD_REG}:        0xF033,
+	{Type: parser.FX55, Format: CMD_REG}:        0xF055,
+	{Type: parser.FX65, Format: CMD_REG}:        0xF065,
 }
 
 func (c Compiler) Compile() []byte {
@@ -128,6 +128,8 @@ func ParseInstruction(opcode int, instruction Instruction) []byte {
 		return OpcodeToBytes(ParseCMD_SPC_REG(opcode, instruction))
 	case CMD_SPC_VAL:
 		return OpcodeToBytes(ParseCMD_SPC_VAL(opcode, instruction))
+	case CMD_REG_REG_VAL:
+		return OpcodeToBytes(ParseCMD_REG_REG_VAL(opcode, instruction))
 	}
 	fmt.Printf("This should never be reached! %d %#v\n", opcode, instruction)
 	return []byte{}
@@ -178,5 +180,14 @@ func ParseCMD_SPC_REG(opcode int, inst Instruction) int {
 func ParseCMD_SPC_VAL(opcode int, inst Instruction) int {
 	val := valueToInt(inst.Tokens[3])
 	op := 0xA000 | (val & 0x0FFF)
+	return op
+}
+
+func ParseCMD_REG_REG_VAL(opcode int, inst Instruction) int {
+	// DRW REG[0x1], REG[0x2], N
+	reg1 := valueToInt(inst.Tokens[3])
+	reg2 := valueToInt(inst.Tokens[8])
+	val := valueToInt(inst.Tokens[11])
+	op := opcode | ((reg1 << 8) & 0x0F00) | ((reg2 << 4) & 0x00F0) | (val & 0xF)
 	return op
 }

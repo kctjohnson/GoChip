@@ -103,7 +103,8 @@ func DisassembleOpcode(op chip8.WORD) string {
 		str += fmt.Sprintf("BRND reg[0x%X], %d\n", regx, op&0x00FF)
 	case 0xD000:
 		regx, regy := chip8.GetXYReg(op)
-		str += fmt.Sprintf("DRW reg[0x%X], reg[0x%X]\n", regx, regy)
+		rows := op & 0xF
+		str += fmt.Sprintf("DRW reg[0x%X], reg[0x%X], %d\n", regx, regy, rows)
 	case 0xE000:
 		switch op & 0x00FF {
 		case 0x9E:

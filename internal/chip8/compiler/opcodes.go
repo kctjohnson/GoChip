@@ -17,6 +17,7 @@ const (
 	CMD_REG_SPC
 	CMD_SPC_REG
 	CMD_SPC_VAL
+	CMD_REG_REG_VAL
 )
 
 type Instruction struct {
@@ -236,8 +237,8 @@ func (is *InstructionSet) parse(tokens []parser.Token) {
 			i += 4
 		case parser.DRW:
 			is.Instructions = append(is.Instructions, Instruction{
-				Format: CMD_REG_REG,
-				Tokens: tokens[i : i+10],
+				Format: CMD_REG_REG_VAL,
+				Tokens: tokens[i : i+12],
 			})
 			i += 9
 		case parser.FX29:
