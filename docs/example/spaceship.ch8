@@ -1,0 +1,133 @@
+# Initial startup
+CALL SpriteSetup
+
+GameLoop:
+  # Check for keypresses and draw based on that
+  MOV REG[0],5
+  JKNP REG[0]
+  CALL MoveUp
+
+  MOV REG[0],8
+  JKNP REG[0]
+  CALL MoveLeft
+
+  MOV REG[0],9
+  JKNP REG[0]
+  CALL MoveDown
+
+  MOV REG[0],10
+  JKNP REG[0]
+  CALL MoveRight
+
+  JMP GameLoop
+
+# Set up the sprites
+SpriteSetup:
+  MOV I, 0x00
+
+  # Up view character [0x0]
+  MOV REG[0], 0x40
+  MOV REG[1], 0xA0
+  MOV REG[2], 0xA0
+
+  # Left view character [0x3]
+  MOV REG[3], 0x60
+  MOV REG[4], 0x80
+  MOV REG[5], 0x60
+
+  # Right view character [0x6]
+  MOV REG[6], 0xC0
+  MOV REG[7], 0x20
+  MOV REG[8], 0xC0
+
+  # Down view character [0x9]
+  MOV REG[9], 0xA0
+  MOV REG[10], 0xA0
+  MOV REG[11], 0x40
+
+  # Store those sprites in memory
+  FX55 REG[11]
+
+  RET
+
+# X and Y are passed in through reg 0 and 1
+DrawUp:
+  CLS
+  MOV I, 0x0
+  DRW REG[0], REG[1], 3
+  RET
+
+DrawLeft:
+  CLS
+  MOV I, 0x3
+  DRW REG[0], REG[1], 3
+  RET
+
+DrawRight:
+  CLS
+  MOV I, 0x6
+  DRW REG[0], REG[1], 3
+  RET
+
+DrawDown:
+  CLS
+  MOV I, 0x9
+  DRW REG[0], REG[1], 3
+  RET
+
+SetupPlayerInfo:
+  # Player info starts at 0xC
+  MOV I, 0xC
+  MOV REG[0], 10 # Health
+  MOV REG[1], 0 # X
+  MOV REG[2], 0 # Y
+  FX55 REG[2] # Write the new data to memory
+  RET
+
+# Loads player info into reg 0-2
+LoadPlayerInfo:
+  MOV I, 0xC
+  FX65 REG[2]
+  RET
+
+# Saves player info from reg 0-2
+SavePlayerInfo:
+  MOV I, 0xC
+  FX55 REG[2] # Write the new data to memory
+  RET
+
+MoveLeft:
+  CALL LoadPlayerInfo
+  ADD REG[1], 255
+  CALL SavePlayerInfo
+  MOV REG[0], REG[1]
+  MOV REG[1], REG[2]
+  CALL DrawLeft
+  RET
+
+MoveRight:
+  CALL LoadPlayerInfo
+  ADD REG[1], 1
+  CALL SavePlayerInfo
+  MOV REG[0], REG[1]
+  MOV REG[1], REG[2]
+  CALL DrawRight
+  RET
+
+MoveUp:
+  CALL LoadPlayerInfo
+  ADD REG[2], 255
+  CALL SavePlayerInfo
+  MOV REG[0], REG[1]
+  MOV REG[1], REG[2]
+  CALL DrawUp
+  RET
+
+MoveDown:
+  CALL LoadPlayerInfo
+  ADD REG[2], 1
+  CALL SavePlayerInfo
+  MOV REG[0], REG[1]
+  MOV REG[1], REG[2]
+  CALL DrawDown
+  RET
