@@ -1,3 +1,5 @@
+# GoChip
+
 A bunch of tooling for working with Chip-8, including a language parser, disassembler, compiler, and emulator.
 
 Go to the docs folder to see more info on using the different tools in the repository.
