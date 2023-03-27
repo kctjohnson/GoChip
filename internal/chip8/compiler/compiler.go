@@ -1,18 +1,18 @@
-package compile
+package compiler
 
 import (
 	"fmt"
 	"strconv"
 
-	"github.com/kctjohnson/chip8-emu/internal/chip8/parse"
+	"github.com/kctjohnson/chip8-emu/internal/chip8/parser"
 )
 
 type Compiler struct {
 	Instructions *InstructionSet
-	tokens       []parse.Token
+	tokens       []parser.Token
 }
 
-func NewCompiler(tokens []parse.Token) *Compiler {
+func NewCompiler(tokens []parser.Token) *Compiler {
 	return &Compiler{
 		tokens:       tokens,
 		Instructions: NewInstructionSet(tokens),
@@ -20,51 +20,51 @@ func NewCompiler(tokens []parse.Token) *Compiler {
 }
 
 type mapKey struct {
-	Type   parse.TokenType
+	Type   parser.TokenType
 	Format InstructionFormat
 }
 
 var OpcodeMap = map[mapKey]int{
-	{Type: parse.CLS, Format: CMD}:          0x00E0,
-	{Type: parse.SYSCALL, Format: CMD_VAL}:  0x0000,
-	{Type: parse.CALL, Format: CMD_VAL}:     0x0000,
-	{Type: parse.RET, Format: CMD}:          0x00EE,
-	{Type: parse.JMP, Format: CMD_VAL}:      0x1000,
-	{Type: parse.RJMP, Format: CMD_VAL}:     0xB000,
-	{Type: parse.SEQ, Format: CMD_REG_REG}:  0x5000,
-	{Type: parse.SEQ, Format: CMD_REG_VAL}:  0x3000,
-	{Type: parse.SNEQ, Format: CMD_REG_REG}: 0x9000,
-	{Type: parse.SNEQ, Format: CMD_REG_VAL}: 0x4000,
-	{Type: parse.JKP, Format: CMD_REG}:      0xE09E,
-	{Type: parse.JKNP, Format: CMD_REG}:     0xE0A1,
-	{Type: parse.WK, Format: CMD_REG}:       0xF00A,
-	{Type: parse.MOV, Format: CMD_REG_REG}:  0x8000,
-	{Type: parse.MOV, Format: CMD_REG_SPC}:  0xF007,
-	{Type: parse.MOV, Format: CMD_REG_VAL}:  0x6000,
-	{Type: parse.MOV, Format: CMD_SPC_VAL}:  0xA000,
-	{Type: parse.ADD, Format: CMD_REG_REG}:  0x8004,
-	{Type: parse.ADD, Format: CMD_REG_VAL}:  0x7000,
-	{Type: parse.ADD, Format: CMD_SPC_REG}:  0xF01E,
-	{Type: parse.SUB, Format: CMD_REG_REG}:  0x8005,
-	{Type: parse.OR, Format: CMD_REG_REG}:   0x8001,
-	{Type: parse.AND, Format: CMD_REG_REG}:  0x8002,
-	{Type: parse.XOR, Format: CMD_REG_REG}:  0x8003,
-	{Type: parse.SHR, Format: CMD_REG}:      0x8006,
-	{Type: parse.SHL, Format: CMD_REG}:      0x800E,
-	{Type: parse.BRND, Format: CMD_REG}:     0xC000,
-	{Type: parse.DRW, Format: CMD_REG_REG}:  0xD000,
-	{Type: parse.FX29, Format: CMD_REG}:     0xF029,
-	{Type: parse.FX33, Format: CMD_REG}:     0xF033,
-	{Type: parse.FX55, Format: CMD_REG}:     0xF055,
-	{Type: parse.FX65, Format: CMD_REG}:     0xF065,
+	{Type: parser.CLS, Format: CMD}:          0x00E0,
+	{Type: parser.SYSCALL, Format: CMD_VAL}:  0x0000,
+	{Type: parser.CALL, Format: CMD_VAL}:     0x0000,
+	{Type: parser.RET, Format: CMD}:          0x00EE,
+	{Type: parser.JMP, Format: CMD_VAL}:      0x1000,
+	{Type: parser.RJMP, Format: CMD_VAL}:     0xB000,
+	{Type: parser.SEQ, Format: CMD_REG_REG}:  0x5000,
+	{Type: parser.SEQ, Format: CMD_REG_VAL}:  0x3000,
+	{Type: parser.SNEQ, Format: CMD_REG_REG}: 0x9000,
+	{Type: parser.SNEQ, Format: CMD_REG_VAL}: 0x4000,
+	{Type: parser.JKP, Format: CMD_REG}:      0xE09E,
+	{Type: parser.JKNP, Format: CMD_REG}:     0xE0A1,
+	{Type: parser.WK, Format: CMD_REG}:       0xF00A,
+	{Type: parser.MOV, Format: CMD_REG_REG}:  0x8000,
+	{Type: parser.MOV, Format: CMD_REG_SPC}:  0xF007,
+	{Type: parser.MOV, Format: CMD_REG_VAL}:  0x6000,
+	{Type: parser.MOV, Format: CMD_SPC_VAL}:  0xA000,
+	{Type: parser.ADD, Format: CMD_REG_REG}:  0x8004,
+	{Type: parser.ADD, Format: CMD_REG_VAL}:  0x7000,
+	{Type: parser.ADD, Format: CMD_SPC_REG}:  0xF01E,
+	{Type: parser.SUB, Format: CMD_REG_REG}:  0x8005,
+	{Type: parser.OR, Format: CMD_REG_REG}:   0x8001,
+	{Type: parser.AND, Format: CMD_REG_REG}:  0x8002,
+	{Type: parser.XOR, Format: CMD_REG_REG}:  0x8003,
+	{Type: parser.SHR, Format: CMD_REG}:      0x8006,
+	{Type: parser.SHL, Format: CMD_REG}:      0x800E,
+	{Type: parser.BRND, Format: CMD_REG}:     0xC000,
+	{Type: parser.DRW, Format: CMD_REG_REG}:  0xD000,
+	{Type: parser.FX29, Format: CMD_REG}:     0xF029,
+	{Type: parser.FX33, Format: CMD_REG}:     0xF033,
+	{Type: parser.FX55, Format: CMD_REG}:     0xF055,
+	{Type: parser.FX65, Format: CMD_REG}:     0xF065,
 }
 
 func (c Compiler) Compile() []byte {
 	opcodes := []byte{}
 	for _, inst := range c.Instructions.Instructions {
 		// MOV is a special case due to sound delay and time delay
-		if inst.Tokens[0].Type == parse.MOV && inst.Format == CMD_SPC_REG {
-			if inst.Tokens[1].Type == parse.DELAY {
+		if inst.Tokens[0].Type == parser.MOV && inst.Format == CMD_SPC_REG {
+			if inst.Tokens[1].Type == parser.DELAY {
 				bytes := ParseInstruction(0xF015, inst)
 				opcodes = append(opcodes, bytes...)
 			} else { // SND_DELAY
@@ -88,8 +88,8 @@ func (c Compiler) Compile() []byte {
 	return opcodes
 }
 
-func valueToInt(token parse.Token) int {
-	if token.Type == parse.HEX {
+func valueToInt(token parser.Token) int {
+	if token.Type == parser.HEX {
 		val, err := strconv.ParseInt(token.Literal[2:], 16, 16)
 		if err != nil {
 			return -1

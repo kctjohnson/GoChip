@@ -1,9 +1,9 @@
-package compile
+package compiler
 
 import (
 	"fmt"
 
-	"github.com/kctjohnson/chip8-emu/internal/chip8/parse"
+	"github.com/kctjohnson/chip8-emu/internal/chip8/parser"
 )
 
 type InstructionFormat int
@@ -21,68 +21,68 @@ const (
 
 type Instruction struct {
 	Format InstructionFormat
-	Tokens []parse.Token
+	Tokens []parser.Token
 }
 
 type InstructionSet struct {
 	Instructions []Instruction
 }
 
-func NewInstructionSet(tokens []parse.Token) *InstructionSet {
+func NewInstructionSet(tokens []parser.Token) *InstructionSet {
 	is := &InstructionSet{}
 	is.parse(tokens)
 	return is
 }
 
-func (is *InstructionSet) parse(tokens []parse.Token) {
+func (is *InstructionSet) parse(tokens []parser.Token) {
 	is.Instructions = []Instruction{}
 	for i := 0; i < len(tokens); i++ {
 		curToken := tokens[i]
 		switch curToken.Type {
-		case parse.ILLEGAL:
+		case parser.ILLEGAL:
 			fmt.Printf("Illegal token found! %#v\n", curToken)
 			return
-		case parse.EOF:
+		case parser.EOF:
 			return
-		case parse.UNKNOWNIDENT:
+		case parser.UNKNOWNIDENT:
 			fmt.Printf("Unknown identifier found! %#v\n", curToken)
 			return
-		case parse.CLS:
+		case parser.CLS:
 			is.Instructions = append(is.Instructions, Instruction{
 				Format: CMD,
-				Tokens: []parse.Token{curToken},
+				Tokens: []parser.Token{curToken},
 			})
-		case parse.SYSCALL:
+		case parser.SYSCALL:
 			is.Instructions = append(is.Instructions, Instruction{
 				Format: CMD_VAL,
 				Tokens: tokens[i : i+2],
 			})
 			i++
-		case parse.CALL:
+		case parser.CALL:
 			is.Instructions = append(is.Instructions, Instruction{
 				Format: CMD_VAL,
 				Tokens: tokens[i : i+2],
 			})
 			i++
-		case parse.RET:
+		case parser.RET:
 			is.Instructions = append(is.Instructions, Instruction{
 				Format: CMD,
-				Tokens: []parse.Token{curToken},
+				Tokens: []parser.Token{curToken},
 			})
-		case parse.JMP:
+		case parser.JMP:
 			is.Instructions = append(is.Instructions, Instruction{
 				Format: CMD_VAL,
 				Tokens: tokens[i : i+2],
 			})
 			i++
-		case parse.RJMP:
+		case parser.RJMP:
 			is.Instructions = append(is.Instructions, Instruction{
 				Format: CMD_VAL,
 				Tokens: tokens[i : i+2],
 			})
 			i++
-		case parse.SEQ:
-			if tokens[i+6].Type == parse.REG {
+		case parser.SEQ:
+			if tokens[i+6].Type == parser.REG {
 				is.Instructions = append(is.Instructions, Instruction{
 					Format: CMD_REG_REG,
 					Tokens: tokens[i : i+10],
@@ -95,8 +95,8 @@ func (is *InstructionSet) parse(tokens []parse.Token) {
 				})
 				i += 6
 			}
-		case parse.SNEQ:
-			if tokens[i+6].Type == parse.REG {
+		case parser.SNEQ:
+			if tokens[i+6].Type == parser.REG {
 				is.Instructions = append(is.Instructions, Instruction{
 					Format: CMD_REG_REG,
 					Tokens: tokens[i : i+10],
@@ -109,34 +109,34 @@ func (is *InstructionSet) parse(tokens []parse.Token) {
 				})
 				i += 6
 			}
-		case parse.JKP:
+		case parser.JKP:
 			is.Instructions = append(is.Instructions, Instruction{
 				Format: CMD_REG,
 				Tokens: tokens[i : i+5],
 			})
 			i += 4
-		case parse.JKNP:
+		case parser.JKNP:
 			is.Instructions = append(is.Instructions, Instruction{
 				Format: CMD_REG,
 				Tokens: tokens[i : i+5],
 			})
 			i += 4
-		case parse.WK:
+		case parser.WK:
 			is.Instructions = append(is.Instructions, Instruction{
 				Format: CMD_REG,
 				Tokens: tokens[i : i+5],
 			})
 			i += 4
-		case parse.MOV:
+		case parser.MOV:
 			switch tokens[i+1].Type {
-			case parse.REG:
-				if tokens[i+6].Type == parse.REG {
+			case parser.REG:
+				if tokens[i+6].Type == parser.REG {
 					is.Instructions = append(is.Instructions, Instruction{
 						Format: CMD_REG_REG,
 						Tokens: tokens[i : i+10],
 					})
 					i += 9
-				} else if tokens[i+6].Type == parse.DELAY {
+				} else if tokens[i+6].Type == parser.DELAY {
 					is.Instructions = append(is.Instructions, Instruction{
 						Format: CMD_REG_SPC,
 						Tokens: tokens[i : i+7],
@@ -149,30 +149,30 @@ func (is *InstructionSet) parse(tokens []parse.Token) {
 					})
 					i += 6
 				}
-			case parse.ADP:
+			case parser.ADP:
 				is.Instructions = append(is.Instructions, Instruction{
 					Format: CMD_SPC_VAL,
 					Tokens: tokens[i : i+4],
 				})
 				i += 3
-			case parse.DELAY:
+			case parser.DELAY:
 				is.Instructions = append(is.Instructions, Instruction{
 					Format: CMD_SPC_REG,
 					Tokens: tokens[i : i+7],
 				})
 				i += 6
-			case parse.SND_DELAY:
+			case parser.SND_DELAY:
 				is.Instructions = append(is.Instructions, Instruction{
 					Format: CMD_SPC_REG,
 					Tokens: tokens[i : i+7],
 				})
 				i += 6
 			}
-		case parse.ADD:
+		case parser.ADD:
 			switch tokens[i+1].Type {
-			case parse.REG:
+			case parser.REG:
 				switch tokens[i+6].Type {
-				case parse.REG:
+				case parser.REG:
 					is.Instructions = append(is.Instructions, Instruction{
 						Format: CMD_REG_REG,
 						Tokens: tokens[i : i+10],
@@ -185,79 +185,79 @@ func (is *InstructionSet) parse(tokens []parse.Token) {
 					})
 					i += 6
 				}
-			case parse.ADP:
+			case parser.ADP:
 				is.Instructions = append(is.Instructions, Instruction{
 					Format: CMD_SPC_REG,
 					Tokens: tokens[i : i+7],
 				})
 				i += 6
 			}
-		case parse.SUB:
+		case parser.SUB:
 			is.Instructions = append(is.Instructions, Instruction{
 				Format: CMD_REG_REG,
 				Tokens: tokens[i : i+10],
 			})
 			i += 9
-		case parse.OR:
+		case parser.OR:
 			is.Instructions = append(is.Instructions, Instruction{
 				Format: CMD_REG_REG,
 				Tokens: tokens[i : i+10],
 			})
 			i += 9
-		case parse.AND:
+		case parser.AND:
 			is.Instructions = append(is.Instructions, Instruction{
 				Format: CMD_REG_REG,
 				Tokens: tokens[i : i+10],
 			})
 			i += 9
-		case parse.XOR:
+		case parser.XOR:
 			is.Instructions = append(is.Instructions, Instruction{
 				Format: CMD_REG_REG,
 				Tokens: tokens[i : i+10],
 			})
 			i += 9
-		case parse.SHR:
+		case parser.SHR:
 			is.Instructions = append(is.Instructions, Instruction{
 				Format: CMD_REG,
 				Tokens: tokens[i : i+5],
 			})
 			i += 4
-		case parse.SHL:
+		case parser.SHL:
 			is.Instructions = append(is.Instructions, Instruction{
 				Format: CMD_REG,
 				Tokens: tokens[i : i+5],
 			})
 			i += 4
-		case parse.BRND:
+		case parser.BRND:
 			is.Instructions = append(is.Instructions, Instruction{
 				Format: CMD_REG,
 				Tokens: tokens[i : i+7],
 			})
 			i += 4
-		case parse.DRW:
+		case parser.DRW:
 			is.Instructions = append(is.Instructions, Instruction{
 				Format: CMD_REG_REG,
 				Tokens: tokens[i : i+10],
 			})
 			i += 9
-		case parse.FX29:
+		case parser.FX29:
 			is.Instructions = append(is.Instructions, Instruction{
 				Format: CMD_REG,
 				Tokens: tokens[i : i+5],
 			})
 			i += 4
-		case parse.FX33:
+		case parser.FX33:
 			is.Instructions = append(is.Instructions, Instruction{
 				Format: CMD_REG,
 				Tokens: tokens[i : i+5],
 			})
 			i += 4
-		case parse.FX55:
+		case parser.FX55:
 			is.Instructions = append(is.Instructions, Instruction{
 				Format: CMD_REG,
 				Tokens: tokens[i : i+5],
 			})
-		case parse.FX65:
+		case parser.FX65:
 			is.Instructions = append(is.Instructions, Instruction{
 				Format: CMD_REG,
 				Tokens: tokens[i : i+5],

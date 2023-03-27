@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/kctjohnson/chip8-emu/internal/chip8/compile"
-	"github.com/kctjohnson/chip8-emu/internal/chip8/parse"
+	"github.com/kctjohnson/chip8-emu/internal/chip8/compiler"
+	"github.com/kctjohnson/chip8-emu/internal/chip8/parser"
 )
 
 func main() {
@@ -29,10 +29,10 @@ func main() {
 		panic(err)
 	}
 
-	p := parse.NewParser(string(file))
+	p := parser.NewParser(string(file))
 	p.ReadTokens()
 
-	c := compile.NewCompiler(p.GetTokens())
+	c := compiler.NewCompiler(p.GetTokens())
 	data := c.Compile()
 	err = os.WriteFile(*outputPath, data, 0777)
 	if err != nil {

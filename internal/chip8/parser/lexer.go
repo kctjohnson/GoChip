@@ -1,4 +1,4 @@
-package parse
+package parser
 
 type Lexer struct {
 	input        string
