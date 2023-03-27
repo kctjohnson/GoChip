@@ -43,12 +43,15 @@ func (l *Lexer) NextToken() Token {
 		tok = NewToken(RBRACKET, l.ch)
 	case ',':
 		tok = NewToken(COMMA, l.ch)
+	case ':':
+		tok = NewToken(COLON, l.ch)
 	case '0':
 		tok = l.readValue()
 		return tok
 	case '#':
 		tok.Type = COMMENT
 		tok.Literal = l.readComment()
+		return tok
 	case 0:
 		tok.Literal = ""
 		tok.Type = EOF

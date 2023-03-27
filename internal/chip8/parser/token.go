@@ -21,6 +21,9 @@ const (
 	RBRACKET     = "RBRACKET"
 	COMMA        = "COMMA"
 	COMMENT      = "COMMENT"
+	COLON        = "COLON"
+	LABEL_DEF    = "LABEL_DEF"
+	LABEL_REF    = "LABEL_REF"
 
 	// Values
 	HEX     = "HEX"

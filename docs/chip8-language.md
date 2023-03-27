@@ -70,3 +70,15 @@ All addresses must be provided starting at 0x200.
 | FX33    | Stores the binary-coded decimal representation of VX (Check Wiki for more info)   | CMD_REG         | `FX33 REG[0xN]`             |
 | FX55    | Stores from V0 to VX (include VX) in memory, starting at I                        | CMD_REG         | `FX55 REG[0xN]`             |
 | FX65    | Fills from V0 to VX (including VX) with values from memory, starting at address I | CMD_REG         | `FX65 REG[0xN]`             |
+
+## Labels
+
+You can put labels in your code to jump to rather that figuring out and writing
+jump addresses yourself.
+
+```MOV REG[0], 0
+Looper:
+ADD REG[0], 1
+SEQ REG[0], 10
+JMP Looper
+```

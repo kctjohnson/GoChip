@@ -8,6 +8,7 @@ import (
 type Parser struct {
 	lexer  *Lexer
 	tokens []Token
+	labels []string
 }
 
 func NewParser(input string) *Parser {
@@ -18,7 +19,10 @@ func NewParser(input string) *Parser {
 }
 
 func (p *Parser) ReadTokens() {
+	p.labels = []string{}
 	p.tokens = []Token{}
+
+	// First pass gathers the tokens
 	for {
 		tok := p.lexer.NextToken()
 		if tok.Type == EOF {
@@ -28,8 +32,24 @@ func (p *Parser) ReadTokens() {
 			fmt.Printf("Illegal Token: %s\n", tok.Literal)
 			p.tokens = append(p.tokens, tok)
 			break
+		} else if tok.Type == COLON && p.tokens[len(p.tokens)-1].Type == UNKNOWNIDENT {
+			prevTokIndex := len(p.tokens) - 1
+			p.tokens[prevTokIndex].Type = LABEL_DEF
+			p.labels = append(p.labels, p.tokens[prevTokIndex].Literal)
 		}
 		p.tokens = append(p.tokens, tok)
+	}
+
+	// Second pass checks for undefined label references
+	for i, tok := range p.tokens {
+		if tok.Type == UNKNOWNIDENT {
+			for _, label := range p.labels {
+				if tok.Literal == label {
+					p.tokens[i].Type = LABEL_REF
+					break
+				}
+			}
+		}
 	}
 }
 
