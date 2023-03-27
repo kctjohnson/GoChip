@@ -1,12 +1,10 @@
 A bunch of tooling for working with Chip-8, including a language parser, disassembler, compiler, and emulator.
 
+Go to the docs folder to see more info on using the different tools in the repository.
+
 ![Emulator being ran](docs/Images/Emulation.png?raw=true)
 
 ![Debug mode](docs/Images/DebugMode.png?raw=true)
-
-# TODO
-
-I need to finish sound emulation. Also need to get the last two F instructions working properly with compilation
 
 # CREDITS
 
